@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+
+/**
+Color pallete
+turqouise 4bc6b9
+middle blue 73c1c6
+dark blue 96c3ce
+gray A79Ab2
+mauve B57BA6
+**/
+.loginButton {
+    @apply flex;
+    @apply flex-row;
+    @apply items-center;
+    @apply shadow; 
+    @apply my-4;
+    @apply capitalize;
+    @apply  h-16;
+    @apply p-5;
+    @apply border-gray-400;
+    @apply border-2 ;
+    @apply rounded;
+}
+
+.input {
+    @apply h-16 border rounded p-5;
+}
+
+.btn-big {
+    @apply h-16 p-5 border mt-5 rounded text-white bg-teal-400 font-bold text-2xl;
+}
+
+button:focus, button:active, button:hover {
+    @apply outline-none;
+}
+
+input:focus {
+    @apply outline-none;
+    @apply border-gray-900;
+}
+
+button:active {
+    @apply outline-none;
+}
+
+button:disabled {
+    @apply bg-gray-400 text-black opacity-50;
+}
+
+.leaflet-container {
+    height: 400px;
+    width: 95%;
+}
+@tailwind utilities;
+
