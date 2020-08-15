@@ -9,6 +9,8 @@ import EmailInput from "./form/EmailInput";
 import TextInput from "./form/TextInput";
 import PasswordInput from "./form/PasswordInput";
 import FormProvider, { FormContext } from "./form/Context/FormContext";
+import Cookies from "js-cookie";
+import { UserContext } from "./auth/UserContext";
 
 const LoginMethod = ({name, url, svg}) => (
     // Stateless component that creates a button for user to log in with a certain method 
@@ -52,9 +54,14 @@ export const LoginSignup = ({type="login", Methods, Form, handleSubmit }) => {
 const LoginForm = ({ handleSubmit }) => {
     // form to log in user 
     const { fields, errors } = useContext(FormContext);
-    console.log(fields);
+    const { userDispatch } = useContext(UserContext);
+    
+    const loginSubmit = e => {
+        e.preventDefault();
+        handleSubmit({...fields, userDispatch});
+    }
    return(
-        <form className="flex flex-col" onSubmit={e => handleSubmit(e)}>
+        <form className="flex flex-col" onSubmit={e => loginSubmit(e)}>
             <EmailInput context={FormContext} />
             <PasswordInput 
                     error={errors.passwordError}
@@ -80,7 +87,8 @@ export const LoginEmail = ({toggle, setToggle, handleSubmit}) => (
 export const SignupForm = ({handleSubmit}) => {
     // form to sign up users manually 
     const { fields, errors } = useContext(FormContext);
-    console.log(fields);
+    const { userDispatch } = useContext(UserContext);
+    
     const disabled = () => {
         if (Object.values(fields).length < 5) return true;
         const fieldsList = Object.values(fields);
@@ -94,11 +102,14 @@ export const SignupForm = ({handleSubmit}) => {
         return false
     }
     
-
+    const submitForm = e => {
+        e.preventDefault();
+        handleSubmit({body: {...fields}, userDispatch});
+    }
     const errorClass = "border-red-400 focus:border-red-400 bg-red-100";
    
     return (
-        <form className="flex flex-col" onSubmit={(e) => handleSubmit(e)}>
+        <form className="flex flex-col" onSubmit={(e) => submitForm(e)}>
                 <TextInput 
                     value={fields.firstname || ""} name="firstname" placeholder="First name" context={FormContext} />
                 <TextInput name="lastname" placeholder="Last name" 
@@ -130,14 +141,53 @@ export const SignupEmail = ({toggle, setToggle, handleSubmit}) => {
     )
 }
 
-const handleSignup = (e) => {
-    e.preventDefault();
-    alert("this was a signup");
+const handleSignup = async (params) => {
+    const { body, userDispatch } = params;
+    const request = new Request("/user");
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("X-CSRFToken", Cookies.get("csrf"));
+    try {
+        const res = await fetch(request, { headers, body: JSON.stringify(body), method: "POST"});
+        const data = await res.json();
+
+        // if new account creation is successful
+        // add token to cookies, update state
+        if (data.status === "success") {
+            window.localStorage.setItem("token", data.token)
+            window.localStorage.setItem("username", data.username);
+            
+            window.location.href = "/stays"
+        }
+    } catch (err) {
+        console.log(err);
+    }
 }
 
-const handleLogin = (e) => {
-    e.preventDefault();
-    alert("this was a login");
+
+const handleLogin = async (params) => {
+    const { email, password, userDispatch } = params;
+    const request = new Request("/login");
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("X-CSRFToken", Cookies.get("csrf"));
+    const body = JSON.stringify({ email, password });
+    
+    try {
+        const res = await fetch(request, { method: "POST", body, headers })
+        const data = await res.json()
+        if (data.status === "success") {
+            // update state 
+            window.localStorage.setItem("token", data.token);
+            window.localStorage.setItem("email", data.username);
+            userDispatch({ type: "login", user: data.user})
+            window.location.href = "/stays";
+        } else {
+            console.log("error data: ", data);
+        }
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 export const Login = () => (

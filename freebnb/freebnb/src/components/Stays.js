@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import DefaultStay from "../assetts/defaultStay1.webp";
 import DefaultStay2 from "../assetts/defaultStay2.webp";
 import DefaultStay3 from "../assetts/defaultStay3.webp";

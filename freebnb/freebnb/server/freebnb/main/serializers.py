@@ -1,19 +1,31 @@
-from rest_framework import serializers 
-from django.contrib.auth.models import User 
+from rest_framework import serializers  
+from .models import User  
+from random import randint
 
 class CreateUserSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=100)
     email = serializers.EmailField()
-    first_name = serializers.CharField(max_length=100)
-    last_name = serializers.CharField(max_length=100)
-    username = serializers.CharField(max_length=100)
-    birthday = serializers.DateField() 
+    firstname = serializers.CharField(max_length=100)
+    lastname = serializers.CharField(max_length=100)
+    birthdate = serializers.DateField() 
     
     def save(self):
-        new_user = User()
-        new_user.password = self.password 
-        new_user.email = self.email 
-        new_user.first_name = self.first_name 
-        new_user.last_name = self.last_name 
+        username = f'{self.data["firstname"]}_{self.data["lastname"]}{randint(0,200)}'
+        
+        new_user = User(
+            email=self.data["email"],
+            first_name=self.data["firstname"],
+            last_name = self.data["lastname"],
+            birthdate = self.data["birthdate"],
+            username=username 
+        ) 
+        new_user.set_password(self.data["password"])
         new_user.save()
 
+        return new_user 
+
+class UserSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    first_name = serializers.CharField(max_length=100)
+    last_name = serializers.CharField(max_length=100)
+    birthdate = serializers.DateField() 
