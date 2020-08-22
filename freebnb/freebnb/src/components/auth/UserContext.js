@@ -18,22 +18,34 @@ const reducer = (state, action) => {
                 [action.key]: action.value
             };
         case "login":
-            console.log("user logged in?");
             return {
                 ...state,
                 user: action.user,
                 loggedIn: true 
             }
+        case "logout":
+            localStorage.clear();
+            return {
+                ...state,
+                user: null,
+                loggedIn: false,
+                reservations: [],
+                stays: []
+            }
         default:
+            console.log("default case");
             return state;
     }
 }
 
 const UserProvider = ({children}) => {
-    const [userState, userDispatch] = useReducer(reducer, defaultState);
-    
+    const [userState, dispatch] = useReducer(reducer, defaultState);
+
+    const login = (user) => dispatch({ type: "login", user});
+    const logout = () => dispatch({ type: "logout"});
+
     return (
-        <UserContext.Provider value={{userState, userDispatch}}>
+        <UserContext.Provider value={{userState, login, logout}}>
             { children }
         </UserContext.Provider>
     )

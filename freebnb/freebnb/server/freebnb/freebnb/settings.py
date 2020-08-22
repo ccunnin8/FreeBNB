@@ -12,9 +12,17 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import datetime 
+from os.path import join 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = join(BASE_DIR, "media")
+
+STATICFILES_DIR = (
+    join(BASE_DIR, "media")
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -38,7 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main.apps.MainConfig',
-    "rest_framework"
+    "rest_framework",
+    "localflavor"
 ]
 
 MIDDLEWARE = [
@@ -124,6 +133,7 @@ STATIC_URL = '/static/'
 AUTH_USER_MODEL = "main.User"
 
 REST_FRAMEWORK = {
+   
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
@@ -137,4 +147,5 @@ REST_FRAMEWORK = {
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
     "JWT_ALLOW_REFRESH": True,
+    "JWT_RESPONSE_PAYLOAD_HANDLER": "main.helpers.jwt_response_payload_handler"
 }

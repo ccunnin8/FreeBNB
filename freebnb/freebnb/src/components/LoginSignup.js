@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { ReactComponent as Mail } from "../assetts/mail.svg";
 import { ReactComponent as Facebook } from "../assetts/facebook.svg";
 import { ReactComponent as Google } from "../assetts/google.svg";
@@ -54,11 +54,12 @@ export const LoginSignup = ({type="login", Methods, Form, handleSubmit }) => {
 const LoginForm = ({ handleSubmit }) => {
     // form to log in user 
     const { fields, errors } = useContext(FormContext);
-    const { userDispatch } = useContext(UserContext);
-    
+    const { login } = useContext(UserContext);
+    const history = useHistory();
+
     const loginSubmit = e => {
         e.preventDefault();
-        handleSubmit({...fields, userDispatch});
+        handleSubmit({...fields, login, history});
     }
    return(
         <form className="flex flex-col" onSubmit={e => loginSubmit(e)}>
@@ -87,7 +88,7 @@ export const LoginEmail = ({toggle, setToggle, handleSubmit}) => (
 export const SignupForm = ({handleSubmit}) => {
     // form to sign up users manually 
     const { fields, errors } = useContext(FormContext);
-    const { userDispatch } = useContext(UserContext);
+    const { login } = useContext(UserContext);
     
     const disabled = () => {
         if (Object.values(fields).length < 5) return true;
@@ -104,7 +105,7 @@ export const SignupForm = ({handleSubmit}) => {
     
     const submitForm = e => {
         e.preventDefault();
-        handleSubmit({body: {...fields}, userDispatch});
+        handleSubmit({body: {...fields}, login});
     }
     const errorClass = "border-red-400 focus:border-red-400 bg-red-100";
    
@@ -142,7 +143,7 @@ export const SignupEmail = ({toggle, setToggle, handleSubmit}) => {
 }
 
 const handleSignup = async (params) => {
-    const { body, userDispatch } = params;
+    const { body, login } = params;
     const request = new Request("/user");
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
@@ -166,7 +167,7 @@ const handleSignup = async (params) => {
 
 
 const handleLogin = async (params) => {
-    const { email, password, userDispatch } = params;
+    const { email, password, login, history } = params;
     const request = new Request("/login");
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
@@ -180,8 +181,8 @@ const handleLogin = async (params) => {
             // update state 
             window.localStorage.setItem("token", data.token);
             window.localStorage.setItem("email", data.username);
-            userDispatch({ type: "login", user: data.user})
-            window.location.href = "/stays";
+            login(data.user)
+            history.push("/stays");
         } else {
             console.log("error data: ", data);
         }

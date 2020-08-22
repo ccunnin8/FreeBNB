@@ -1,18 +1,23 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { UserContext } from "./auth/UserContext";
-
+import Nav from "./Nav"
 const Header = () => {
-    const { userState } = useContext(UserContext);
-    console.log(userState);
+    const { logout, userState } = useContext(UserContext);
+    
     return (
-        <nav className="flex items-center justify-between flex-wrap p-6 border-b">
+        <>
+        { userState.loggedIn && <Nav /> }
+        <div className="flex items-center justify-between flex-wrap p-6 border-b">
+            
             <div className="flex items-center flex-shrink-0 text-black mr-6">
                 <span className="font-semibold text-xl tracking-tight">FreeBNB</span>
             </div>
             <div className="flex items-center justify-between p-6">
                 { userState.loggedIn ?
-                <Link className="hover:underline" to ="/logout" />
+                <>
+                    <button onClick={() => logout()} className="hover:underline" to ="/logout">Logout</button>
+                </>
                 :
                 (
                 <>
@@ -26,7 +31,8 @@ const Header = () => {
                 )
                 }
             </div>
-        </nav>
+        </div>
+        </>
     )
 }
 

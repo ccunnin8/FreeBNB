@@ -15,6 +15,9 @@ import Messages, { Chat } from './components/Messages';
 import Profile from "./components/Profile";
 import Reservations from './components/Reservations';
 import Cookie from "js-cookie";
+import { UserContext } from './components/auth/UserContext';
+import PrivateRoute from './components/PrivateRoute';
+import { tokenNotExpired } from "./components/auth/tokenNotExpired";
 
 const carouselData = [
   { title: "mountains", subtitle: "view houses in the mountains", img: Mountains },
@@ -22,16 +25,7 @@ const carouselData = [
   { title: "countryside", subtitle: "get away from the city", img: Countryside }
 ]
 
-const tokenNotExpired = () => {
-  // checks if token-refresh-date exists
-  // returns true if date <= 7 days, false otherwise 
-  let last = localStorage.getItem("token-refresh-date")
-  if (last) {
-    const now = new Date();
-    return ((now - last) / (1000 * 24 * 60 * 60)) <= 7;
-  } 
-  return false;
-}
+
 const Homepage = () => (
   <div className="container mx-auto">
         <Header />
@@ -42,6 +36,8 @@ const Homepage = () => (
 )
 
 function App() {
+  const { login, logout } = useContext(UserContext);
+
   useEffect(() => {
     // get csrf token from the server for post requests 
     (async function setCookie() {
@@ -69,6 +65,7 @@ function App() {
         if (data.token) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("token-refresh-date", new Date())
+          await login(data.user);
         } else {
           console.log("error", data);
         }
@@ -76,9 +73,7 @@ function App() {
     // if token is expired, remove token, refreshdate, username and 
     // make user log in again 
     } else {
-      localStorage.removeItem("token");
-      localStorage.removeItem("token-refresh-date");
-      localStorage.removeItem("username");
+      logout();
     }
   }, [])
   return (
@@ -91,33 +86,33 @@ function App() {
               <Route exact path="/signup">
                 <Signup />
               </Route>
-              <Route exact path="/continue_signup">
+              <PrivateRoute exact path="/continue_signup">
                 <ContinueSignup />
-              </Route>
+              </PrivateRoute>
               <Route exact path="/stays">
                 <Stays />
               </Route>
               <Route exact path="/stay/:id">
                 <Stay />
               </Route>
-              <Route exact path="/messages">
+              <PrivateRoute exact path="/messages">
                 <Messages />
-              </Route>
-              <Route exact path="/messages/:id">
+              </PrivateRoute>
+              <PrivateRoute exact path="/messages/:id">
                   <Chat />
-              </Route>
+              </PrivateRoute>
               <Route exact path="/">
                 <>
                   <Homepage />
                   <Footer />
                 </>
               </Route>
-              <Route exact path="/profile">
+              <PrivateRoute exact path="/profile">
                 <Profile />
-              </Route>
-              <Route exact path="/reservations">
+              </PrivateRoute>
+              <PrivateRoute exact path="/reservations">
                 <Reservations />
-              </Route>
+              </PrivateRoute>
             </Switch>
       </div>
     </Router>

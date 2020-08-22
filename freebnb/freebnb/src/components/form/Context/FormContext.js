@@ -13,9 +13,13 @@ const FormProvider = ({ children}) => {
     const updateErrors = (name, val) => {
         setErrors({...errors, [name]: val})
     }
+
+    const appendToField = (name, val) => {
+        setFields({ ...fields, [name]: [...fields[name], val]})
+    }
     
     return (
-        <FormContext.Provider value={{fields, updateErrors, errors, updateFields}}>
+        <FormContext.Provider value={{fields, updateErrors, errors, updateFields, appendToField }}>
             {children}
         </FormContext.Provider>
     )

@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import Loading from "./Loading";
+
 import DefaultStay from "../assetts/defaultStay1.webp";
 import DefaultStay2 from "../assetts/defaultStay2.webp";
 import DefaultStay3 from "../assetts/defaultStay3.webp";
 import Nav from "./Nav";
-
+import qs from "query-string";
 
 const staysData = [
     { 
@@ -40,25 +43,66 @@ const staysData = [
     }
 ]
 const Stays = () => {
+    const location = useLocation();
+    const  { city, toDate, fromDate, priceLow, priceHigh } = qs.parse(location.search);
+    const [toggle, setToggle] = useState(false);
+    const [stays, setStays] = useState(null);
+    useEffect(() => {
+        const request = new Request(`/stays?city=${city}&toDate=${toDate}&fromDate=${fromDate}&priceLow=${priceLow}&priceHigh=${priceHigh}`)
+        async function getStays(){
+            try {
+                const res = await fetch(request);
+                if (res.status >= 200 && res.status <= 400) {
+                    const data = await res.json();
+                    setStays(data);
+                } else {
+                    console.log("an error occurred " + res.statusText);
+                }
+            } catch (err) {
+                console.log("an error occured " + err);
+            }
+        };
+        getStays();
+    }, [])
+
+    
     return (
         <>
         <Nav />
-        <div className="container px-5 min-h-full" >
-            <header className="h-20 p-10 mb-3">
-                <input 
-                    type="text" 
-                    name="city" 
-                    id="city" 
-                    className="w-11/12 border h-10 rounded-lg text-center" 
-                    placeholder="Search"
-                />
+        <div className="container px-5 min-h-screen flex flex-col" >
+            <header className="h-full p-10">
+                <form className="flex flex-col" method="GET" action="/stays">
+                    <input
+                        type="text" 
+                        name="city" 
+                        id="city" 
+                        className="w-11/12 border h-10 rounded-lg text-center" 
+                        placeholder="Search"
+                    />
+                    <input className="hidden" type="submit" />
+                    <span onClick={() => toggle ? setToggle(false) : setToggle(true)} className="mb-5 p-3">+</span>
+                    <fieldset className={`flex flex-col ${toggle ? "" : "hidden"} mb-3`}>
+                        <label>Price min: </label>
+                        <input type="number" pattern="[0-9]{2}.[0-9]{2}" min="0" name="priceLow" />
+                        <label>Price max: </label>
+                        <input type="number" pattern="[0-9]{2}.[0-9]{2}" min="0" name="priceHigh" />
+                        <label>From date: </label>
+                        <input type="date" name="fromDate" />
+                        <label>To date: </label>
+                        <input type="date" name="toDate" />
+                    </fieldset>
+                </form>
             </header>
-            <main className="min-h-full">
-                <h4 className="text-sm">300+ stays May 14 - 30</h4>
-                <h1 className="text-3xl font-extrabold mb-3">Stays in Baltimore</h1>
-                { staysData.map(stay => <Stay key={stay.id} {...stay} />)}
-            </main>
-            <footer className="border-t h-20 flex justify-center items-center">
+            {
+                stays ? 
+                <main className="min-h-full">
+                    <h4 className="text-sm">300+ stays May 14 - 30</h4>
+                    <h1 className="text-3xl font-extrabold mb-3">Stays in Baltimore</h1>
+                    { staysData.map(stay => <Stay key={stay.id} {...stay} />)}
+                </main> :
+                <Loading />
+            }
+            <footer className="border-t h-20 flex justify-center items-center mt-auto">
                 <p>&#169; 2020 FreeBNB, inc. All rights reserved </p>
             </footer>
         </div>

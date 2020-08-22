@@ -1,5 +1,5 @@
 from rest_framework import serializers  
-from .models import User  
+from .models import User, Listing, Reservation, Address, ListingPhoto  
 from random import randint
 
 class CreateUserSerializer(serializers.Serializer):
@@ -29,3 +29,39 @@ class UserSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     birthdate = serializers.DateField() 
+
+
+class ReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation 
+        fields = "__all__"
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = Address 
+        fields = "__all__"
+
+class ListingPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListingPhoto 
+        fields = "__all__"
+
+class ListingSerializer(serializers.ModelSerializer):
+    owner = UserSerializer()
+    address = AddressSerializer()
+    photos = ListingPhotoSerializer(many=True, read_only=True)
+    reservations = ReservationSerializer(many=True, read_only=True)
+    class Meta:
+        model = Listing 
+        fields = [
+            'id', 
+            'owner', 
+            'address', 
+            'description', 
+            'headline', 
+            'photos', 
+            "reservations", 
+            "price_per_night",
+            "room_type"
+        ]
+    

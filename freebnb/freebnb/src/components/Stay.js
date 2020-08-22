@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { useParams } from "react-router"
 import DefaultStay from "../assetts/defaultStay1.webp";
 import { Map, TileLayer } from "react-leaflet";
 import "../../node_modules/leaflet/dist/leaflet.css";
+import { UserContext } from './auth/UserContext';
 
 const staysData = {
     1: {
@@ -85,7 +86,8 @@ const Stay = () => {
     const [data, setData] = useState({})
     const [show, setShow] = useState("main")
     const { id } = useParams();
-
+    const { userState } = useContext(UserContext);
+    console.log(userState);
     useEffect(() => {
         try {
             setData(staysData[id])  

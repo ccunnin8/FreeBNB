@@ -1,9 +1,10 @@
-from .serializers import CreateUserSerializer, UserSerializer
+from .serializers import CreateUserSerializer, UserSerializer, ListingSerializer, ReservationSerializer
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response 
-from .models import  User 
-from rest_framework import authentication, permissions 
+from .models import  User, Listing, Address, ListingPhoto, Reservation
+from rest_framework import authentication, permissions
+from rest_framework.parsers import MultiPartParser, JSONParser, FormParser
 from django.middleware.csrf import get_token
 from datetime import datetime 
 from rest_framework_jwt.settings import api_settings
@@ -40,6 +41,44 @@ class UserView(APIView):
         else:
             return Response({ "status": "error", "errors": user.errors})
 
+class ListingView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ListingSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request, format=None):
+        user = request.user 
+        queryset = Listing.objects.filter(owner=user)
+        return Response({ "listings": ListingSerializer(queryset, many=True).data })
+
+    def post(self, request, format=None):
+        user = request.user 
+        address = Address(
+            street = request.data["street"],
+            city = request.data["city"],
+            state = request.data["state"],
+            zip_code = request.data["zip_code"]
+        )
+        address.save()
+        listing = Listing(address=address, 
+            owner=user, 
+            headline=request.data["headline"], 
+            description=request.data["description"]
+        )
+        listing.save()
+
+        listingphoto = ListingPhoto(listing=listing, image=request.FILES["photos"])
+    
+        listingphoto.save() 
+
+        return Response({ "listing": ListingSerializer(instance=listing).data}) 
+
+    def delete(self, request, format=None):
+        try:
+            Listing.objects.filter(id=request.data["id"]).delete()
+            return Response({ "status": "success" })
+        except:
+            return Response({ "status": "error" })
 
 class UserListView(APIView):
     query_set = User.objects.all()
@@ -48,22 +87,6 @@ class UserListView(APIView):
     def get(self, request):
         users = [user for user in User.objects.all()]
         return Response({ "users": users }) 
-
-
-@api_view(["POST"])
-def renew_session(request):
-    permissions = (permissions.IsAuthenticated, permissions,)
-    username = request.data.username 
-    user = User.objects.get(username=username)
-
-    payload = api_settings.JWT_PAYLOAD_HANDLER(user)
-    token = api_settings.JWT_ENCODE_HANDLER(payload)
-
-    return Response({
-        "status": "success",
-        "user": UserSerializer(instance=user).data,
-        "token": token 
-    })
 
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
@@ -85,3 +108,15 @@ def login(request):
         "status": "success",
         "user": UserSerializer(instance=user).data
     })
+
+class ReservationView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ReservationSerializer 
+
+    def get(self, request, format=None):
+        user = request.user 
+        queryset = Reservation.objects.filter(user=user)
+        return Response({ "reservations": ReservationSerializer(queryset, many=True).data }) 
+
+    def post(self, request, format=None):
+        pass 
