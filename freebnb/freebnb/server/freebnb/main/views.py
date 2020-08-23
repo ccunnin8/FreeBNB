@@ -1,4 +1,4 @@
-from .serializers import CreateUserSerializer, UserSerializer, ListingSerializer, ReservationSerializer
+from .serializers import CreateUserSerializer, UserSerializer, ListingSerializer, ReservationSerializer, ListingPhotoSerializer
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response 
@@ -53,26 +53,32 @@ class ListingView(APIView):
 
     def post(self, request, format=None):
         user = request.user 
-        address = Address(
-            street = request.data["street"],
-            city = request.data["city"],
-            state = request.data["state"],
+        try:
+            street = request.data["street"]
+            city = request.data["city"]
+            state = request.data["state"]
             zip_code = request.data["zip_code"]
-        )
-        address.save()
-        listing = Listing(address=address, 
-            owner=user, 
-            headline=request.data["headline"], 
+            headline=request.data["headline"]
             description=request.data["description"]
-        )
+            price_per_night=float(request.data["price_per_night"])
+            image=request.FILES["photos"]
+        except:
+            return Response({ "error": "data missing in form!"})
+
+        address = Address(street=street, city=city, state=state, zip_code=zip_code)
+        listing = Listing(
+            address=address, 
+            owner=user, 
+            headline=headline, 
+            description=description, 
+            price_per_night=price_per_night)
+        listingphoto = ListingPhoto(listing=listing, image=image)
+        address.save()
         listing.save()
-
-        listingphoto = ListingPhoto(listing=listing, image=request.FILES["photos"])
-    
         listingphoto.save() 
+        return Response({ "status": "success", "listing": ListingSerializer(instance=listing).data}) 
 
-        return Response({ "listing": ListingSerializer(instance=listing).data}) 
-
+        
     def delete(self, request, format=None):
         try:
             Listing.objects.filter(id=request.data["id"]).delete()
@@ -120,3 +126,35 @@ class ReservationView(APIView):
 
     def post(self, request, format=None):
         pass 
+
+class StayListView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, format=None):
+        try:
+            # convert dates to python date objects 
+            toDate = datetime.strptime("%Y-%m-%d", request.query_params["toDate"])
+            fromDate = datetime.striptime("%Y-%m-%d", request.query_params["fromDate"])
+            # parse city, state if data sent in that format 
+            if "," in request.query_params["city"]:
+                split_city_state = request.query_params["city"].split(", ")
+                city = split_city_state[0]
+                state = split_city_state[1]
+            else:
+                city = request.query_params["city"]
+        except:
+            toDate = None 
+            fromDate = None 
+            city = request.query_params["city"]
+
+        priceLow = request.query_params["priceLow"]
+        priceHigh = request.query_params["priceHigh"]
+        queryset = Listing.objects.filter(
+            address__city=city, 
+            price_per_night__lte=priceHigh or 1000, 
+            price_per_night__gte=priceLow or 0,
+        ).exclude(
+            reservation__from_date__gte=fromDate or datetime.now(),
+            reservation__to_date__lte=toDate or datetime(datetime.now().year + 1, datetime.now().month, datetime.now().day) 
+        )
+        return Response({ "stays": ListingSerializer(queryset, many=True).data})

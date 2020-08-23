@@ -7,7 +7,8 @@ from localflavor.us.models import USStateField, USZipCodeField
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     birthdate = models.DateField(null=True)
-
+    superhost = models.BooleanField(default=False)
+    
 class Address(models.Model):
     street = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
@@ -26,7 +27,6 @@ class Listing(models.Model):
 class ListingPhoto(models.Model):
     image = models.ImageField(upload_to="listings/")
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="photos", related_query_name="photo")
-
 
 class Reservation(models.Model):
     from_date = models.DateField()

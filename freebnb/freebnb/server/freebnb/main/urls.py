@@ -9,5 +9,6 @@ urlpatterns = [
     path("refresh_token", refresh_jwt_token),
     path("login", views.login),
     path("listings", views.ListingView.as_view()),
-    path("reservations", views.ReservationView.as_view())
+    path("reservations", views.ReservationView.as_view()),
+    path("stays", views.StayListView.as_view())
 ]
