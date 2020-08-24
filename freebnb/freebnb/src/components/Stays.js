@@ -47,6 +47,7 @@ const Stays = () => {
     const  { city, toDate, fromDate, priceLow, priceHigh } = qs.parse(location.search);
     const [toggle, setToggle] = useState(false);
     const [stays, setStays] = useState(null);
+    const [loading, setLoading] = useState(true);
     useEffect(() => {
         const request = new Request(`/stays?city=${city}&toDate=${toDate}&fromDate=${fromDate}&priceLow=${priceLow}&priceHigh=${priceHigh}`)
         async function getStays(){
@@ -54,7 +55,8 @@ const Stays = () => {
                 const res = await fetch(request);
                 if (res.status >= 200 && res.status <= 400) {
                     const data = await res.json();
-                    setStays(data);
+                    setStays(data.stays);
+                    setLoading(false);
                 } else {
                     console.log("an error occurred " + res.statusText);
                 }
@@ -82,25 +84,36 @@ const Stays = () => {
                     <input className="hidden" type="submit" />
                     <span onClick={() => toggle ? setToggle(false) : setToggle(true)} className="mb-5 p-3">+</span>
                     <fieldset className={`flex flex-col ${toggle ? "" : "hidden"} mb-3`}>
-                        <label>Price min: </label>
-                        <input type="number" pattern="[0-9]{2}.[0-9]{2}" min="0" name="priceLow" />
-                        <label>Price max: </label>
-                        <input type="number" pattern="[0-9]{2}.[0-9]{2}" min="0" name="priceHigh" />
-                        <label>From date: </label>
-                        <input type="date" name="fromDate" />
-                        <label>To date: </label>
-                        <input type="date" name="toDate" />
+                        <div className="flex flex-row">
+                            <label>Price min: </label>
+                            <input className="border rounded w-16" type="number" pattern="[0-9]{2}.[0-9]{2}" min="0" name="priceLow" />
+                            <label>Price max: </label>
+                            <input className="border rounded w-16" type="number" pattern="[0-9]{2}.[0-9]{2}" min="0" name="priceHigh" />
+                        </div>
+                        <div className="flex flex-row">
+                            <div>
+                                <label>From date: </label>
+                                <input type="date" name="fromDate" />
+                            </div>
+                            <div>
+                                <label>To date: </label>
+                                <input type="date" name="toDate" />
+                            </div>
+                        </div>
                     </fieldset>
                 </form>
             </header>
             {
-                stays ? 
+                loading 
+                ? 
+                <Loading />
+                :
                 <main className="min-h-full">
                     <h4 className="text-sm">300+ stays May 14 - 30</h4>
                     <h1 className="text-3xl font-extrabold mb-3">Stays in Baltimore</h1>
-                    { staysData.map(stay => <Stay key={stay.id} {...stay} />)}
-                </main> :
-                <Loading />
+                    { stays.length > 0 ? staysData.map(stay => <Stay key={stay.id} {...stay} />)
+                    : <h1>No listings found for that data</h1>}
+                </main>
             }
             <footer className="border-t h-20 flex justify-center items-center mt-auto">
                 <p>&#169; 2020 FreeBNB, inc. All rights reserved </p>

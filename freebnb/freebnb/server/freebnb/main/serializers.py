@@ -1,6 +1,7 @@
 from rest_framework import serializers  
 from .models import User, Listing, Reservation, Address, ListingPhoto  
 from random import randint
+from django.core.validators import MaxLengthValidator, MinValueValidator, MaxValueValidator, MinLengthValidator
 
 class CreateUserSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=100)
@@ -64,4 +65,17 @@ class ListingSerializer(serializers.ModelSerializer):
             "price_per_night",
             "room_type"
         ]
-    
+
+class CreateListingSerializer(serializers.Serializer):
+    description = serializers.CharField(max_length=500)
+    headline = serializers.CharField(max_length=255)
+    price_per_night = serializers.DecimalField(max_digits=5, decimal_places=2)
+    room_type = serializers.ChoiceField(choices=["P", "S", "W"])
+
+    def create(self, validated_data):
+        return Listing.objects.create(**validated_data)
+        
+
+        
+
+

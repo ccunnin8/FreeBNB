@@ -9,7 +9,7 @@ const Select = ({name, placeholder, context, value, classes=[], options, default
 
     const handleChange = e => updateFields(name, e.target.value);
     return (
-        <select 
+        <select onLoad={() => updateFields(defaultVal.key, defaultVal.val)}
             className={`input rounded-b-none ${classes.join(" ")}`} 
             type="text" name={name} id={name} placeholder={placeholder}
             onChange={e => handleChange(e)} value={value}>

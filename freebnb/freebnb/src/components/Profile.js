@@ -17,9 +17,9 @@ const roomTypesData = [
 const Listing = ({ headline, photos, id, handleDelete }) => {
     
     return (
-        <div className="flex flex-row items-center w-2/3 h-10 my-4 border-b border-gray-600 pb-3">
+        <div className="flex flex-row items-center w-11/10 h-10 my-4 border-b border-gray-600 pb-3">
             { photos[0] && <img alt="thumbnail" className="w-10 h-10 mr-20 my-4" src={`${photos[0]?.image}`} /> }
-            <h2 className="mr-auto">{headline}</h2>
+            <h2 className="mr-auto overflow-hidden">{headline}</h2>
             <button onClick={() => handleDelete(id)} className="border border-black rounded p-1 bg-gray-500">Delete</button>
         </div>
     )
@@ -49,9 +49,11 @@ export default function Profile() {
             headers.append("Authorization", `JWT ${window.localStorage.getItem("token")}`)
             try {
                 const res = await fetch(request, { method: "GET", headers })
-                if (res.status >= 200 && res.status <= 400) {
+                if (res.status >= 200 && res.status < 400) {
                     const data = await res.json();
-                    setListings(data.listings);
+                    if (data.status !== "error") {
+                        setListings(data.listings);
+                    }
                 } else {
                     console.log("an error occurred getting the data")
                 }
@@ -68,7 +70,9 @@ export default function Profile() {
                 const res = await fetch(request, { method: "GET", headers });
                 if (res.status >= 200 && res.status <= 400 ){
                     const data = await res.json();
-                    setReservations(data.reservations); 
+                    if (data.status !== "error") {
+                        setReservations(data.reservations); 
+                    }
                 } else {
                     console.log("an error occurred gettign the data");
                 }
@@ -94,15 +98,15 @@ export default function Profile() {
                 </div>
                 <h2 className="text-lg">Create a Listing</h2>
                 <FormProvider>
-                    <NewListing />
+                    <NewListing setListings={setListings} listings={listings} />
                 </FormProvider>
             </div>
         </div>
     )
 }
 
-const NewListing = () => {
-    const { fields } = useContext(FormContext);
+const NewListing = ({ setListings, listings }) => {
+    const { fields, clearFields } = useContext(FormContext);
 
     const createNewListing = async e => {
         e.preventDefault();
@@ -117,7 +121,12 @@ const NewListing = () => {
         const res = await fetch(request, { method: "POST", headers, body: formData });
         if (res.status >= 200 && res.status <= 400) {
             const data = await res.json();
-            console.log(data);
+            if (data.status !== "error") {
+                setListings([...listings, data.listing]);
+                clearFields();
+            } else {
+                console.log(data);
+            }
         } else {
             console.log(res, "an error occurred!");
         }
@@ -125,16 +134,12 @@ const NewListing = () => {
 
     return (
         <form encType="multipart/form-data" className="flex flex-col min-w-full" onSubmit={e => createNewListing(e)}>
-            <div>
-                { }
-            </div>
             <FileInput context={FormContext} name="photos" files={fields.files || []}/>
             <TextInput classes={["m-0 "]} placeholder="Headline" name="headline" context={FormContext} value={fields.headline || "" }/>
             <label>Description: </label>
             <TextArea classes={["h-32"]}context={FormContext} value={fields.description || ""} name="description" />
             <label>Price per Night:</label>
             <TextInput 
-                extra={{ pattern: "[0-9]{2}.[0-9]{2}"}}
                 placeholder="Price: $00.00" 
                 name="price_per_night" 
                 context={FormContext} 

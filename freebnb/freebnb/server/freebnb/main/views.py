@@ -1,5 +1,6 @@
-from .serializers import CreateUserSerializer, UserSerializer, ListingSerializer, ReservationSerializer, ListingPhotoSerializer
+from .serializers import *
 from rest_framework.views import APIView
+from rest_framework import status 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response 
 from .models import  User, Listing, Address, ListingPhoto, Reservation
@@ -53,29 +54,22 @@ class ListingView(APIView):
 
     def post(self, request, format=None):
         user = request.user 
+        address = AddressSerializer(data=request.data)
+        if not address.is_valid():
+            return Response({ "status": "error", "errors": address.errors })
+        serialized_listing = CreateListingSerializer(data=request.data) 
+        if not serialized_listing.is_valid():
+            return Response({ "status": "error", "errors": serialized_listing.errors })
+        listing = serialized_listing.save(owner=user, address=address.save())
+
         try:
-            street = request.data["street"]
-            city = request.data["city"]
-            state = request.data["state"]
-            zip_code = request.data["zip_code"]
-            headline=request.data["headline"]
-            description=request.data["description"]
-            price_per_night=float(request.data["price_per_night"])
             image=request.FILES["photos"]
         except:
-            return Response({ "error": "data missing in form!"})
+            return Response({ "error": "please include a photo!"})
 
-        address = Address(street=street, city=city, state=state, zip_code=zip_code)
-        listing = Listing(
-            address=address, 
-            owner=user, 
-            headline=headline, 
-            description=description, 
-            price_per_night=price_per_night)
         listingphoto = ListingPhoto(listing=listing, image=image)
-        address.save()
-        listing.save()
         listingphoto.save() 
+
         return Response({ "status": "success", "listing": ListingSerializer(instance=listing).data}) 
 
         

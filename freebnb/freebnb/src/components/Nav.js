@@ -10,13 +10,11 @@ export default function Nav() {
 
     return (
         <>
-           <nav>
-                <div className="absolute right-0 p-3" 
-                    onMouseEnter={() => toggleMenu()}>
+           <nav onMouseEnter={() => toggleMenu()} onMouseLeave={() => toggleMenu()}>
+                <div className="absolute right-0 p-3" >
                     <Avatar height={30} width={30} />
                 </div>
                 <ul 
-                    onMouseLeave={() => toggleMenu()}
                     style={{right: 0, top: 40}} 
                     className={`${show ? "" : "hidden"} absolute p-3 border bg-white`}>
                     <li className="hover:bg-teal-400 border-b border-teal-600">
