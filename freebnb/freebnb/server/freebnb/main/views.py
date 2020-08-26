@@ -1,5 +1,6 @@
 from .serializers import *
 from rest_framework.views import APIView
+from rest_framework.generics import RetrieveAPIView
 from rest_framework import status 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response 
@@ -121,6 +122,11 @@ class ReservationView(APIView):
     def post(self, request, format=None):
         pass 
 
+class StayView(RetrieveAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = ListingSerializer
+    queryset = Listing.objects.all()
+
 class StayListView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -132,21 +138,26 @@ class StayListView(APIView):
             # parse city, state if data sent in that format 
             if "," in request.query_params["city"]:
                 split_city_state = request.query_params["city"].split(", ")
-                city = split_city_state[0]
-                state = split_city_state[1]
+                address__city = split_city_state[0]
+                address__state = split_city_state[1]
             else:
-                city = request.query_params["city"]
+                address__city = request.query_params["city"]
         except:
             toDate = None 
             fromDate = None 
             city = request.query_params["city"]
 
-        priceLow = request.query_params["priceLow"]
         priceHigh = request.query_params["priceHigh"]
+        priceLow = request.query_params["priceLow"]
+        if not city:
+            listings = Listing.objects.all()[:10]
+            data = ListingSerializer(listings, many=True).data 
+            print(data)
+            return Response({ "status": "success", "stays": data })
         queryset = Listing.objects.filter(
             address__city=city, 
-            price_per_night__lte=priceHigh or 1000, 
-            price_per_night__gte=priceLow or 0,
+            price_per_night__lte=priceHigh or 1000.0, 
+            price_per_night__gte=priceLow or 0.0,
         ).exclude(
             reservation__from_date__gte=fromDate or datetime.now(),
             reservation__to_date__lte=toDate or datetime(datetime.now().year + 1, datetime.now().month, datetime.now().day) 
