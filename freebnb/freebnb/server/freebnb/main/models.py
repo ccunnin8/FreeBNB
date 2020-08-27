@@ -29,7 +29,7 @@ class Amenity(models.Model):
     listings = models.ManyToManyField(Listing)
 
 class Rules(models.Model):
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="rules", related_query_name="rules")
+    listing = models.OneToOneField(Listing, on_delete=models.CASCADE, related_name="rules", related_query_name="rules")
     smoking = models.BooleanField(default=False)
     pets = models.BooleanField(default=False)
     parties = models.BooleanField(default=False)
@@ -37,7 +37,7 @@ class Rules(models.Model):
     check_out = models.IntegerField(default=10)
     additional = models.TextField(max_length=500)
 
-class Reviews(models.Model):
+class Review(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="reviews", related_query_name="review")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews", related_query_name="review")
     review = models.TextField(max_length=500)

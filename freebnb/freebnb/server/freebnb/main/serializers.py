@@ -1,5 +1,5 @@
 from rest_framework import serializers  
-from .models import User, Listing, Reservation, Address, ListingPhoto  
+from .models import User, Listing, Reservation, Address, ListingPhoto, Review, Rules, Amenity  
 from random import randint
 from django.core.validators import MaxLengthValidator, MinValueValidator, MaxValueValidator, MinLengthValidator
 
@@ -31,6 +31,11 @@ class UserSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=100)
     birthdate = serializers.DateField() 
 
+class ReviewSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = Review 
+        fields = "__all__"
 
 class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,11 +52,31 @@ class ListingPhotoSerializer(serializers.ModelSerializer):
         model = ListingPhoto 
         fields = "__all__"
 
+class RulesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rules 
+        fields = [
+            "smoking",
+            "pets",
+            "parties",
+            "check_in",
+            "check_out",
+            "additional"
+        ]
+
+class AmenitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Amenity
+        fields = "__all__"
+
 class ListingSerializer(serializers.ModelSerializer):
     owner = UserSerializer()
     address = AddressSerializer()
     photos = ListingPhotoSerializer(many=True, read_only=True)
     reservations = ReservationSerializer(many=True, read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True)
+    amenities = AmenitySerializer(source="amenity_set", many=True, read_only=True)
+    rules = RulesSerializer()
     class Meta:
         model = Listing 
         fields = [
@@ -63,7 +88,10 @@ class ListingSerializer(serializers.ModelSerializer):
             'photos', 
             "reservations", 
             "price_per_night",
-            "room_type"
+            "room_type",
+            "reviews",
+            "rules",
+            "amenities"
         ]
 
 class CreateListingSerializer(serializers.Serializer):
@@ -74,7 +102,11 @@ class CreateListingSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return Listing.objects.create(**validated_data)
-        
+    
+class ListingQuerySerializer(serializers.Serializer):
+    city = serializers.CharField(max_length=50)
+    state = serializers.CharField(max_length=2)
+    
 
         
 
