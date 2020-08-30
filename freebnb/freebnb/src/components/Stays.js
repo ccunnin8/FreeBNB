@@ -9,7 +9,7 @@ let autocomplete;
 
 const Stays = () => {
     const location = useLocation();
-    const  { city, toDate, fromDate, priceLow, priceHigh } = qs.parse(location.search);
+    const  { city, toDate, fromDate, priceLow, priceHigh, state } = qs.parse(location.search);
     const [toggle, setToggle] = useState(false);
     const [stays, setStays] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ const Stays = () => {
     const submitRef = useRef(null); 
 
     useEffect(() => {
-        const request = new Request(`/stays?city=${city || ""}&toDate=${toDate || ""}&fromDate=${fromDate || ""}&priceLow=${priceLow || ""}&priceHigh=${priceHigh || ""}`)
+        const request = new Request(`/stays?city=${city || ""}&state=${state || ""}&toDate=${toDate || ""}&fromDate=${fromDate || ""}&priceLow=${priceLow || ""}&priceHigh=${priceHigh || ""}`)
         async function getStays(){
             try {
                 const res = await fetch(request);
@@ -42,13 +42,17 @@ const Stays = () => {
         const googleUrl = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_API_KEY}&libraries=places`;
         const loadScript = (url, callback) => {
             // make new script and attach to head 
-            const script = document.createElement("script")
-            script.src = url;
-            document.getElementsByTagName("head")[0].appendChild(script);
-            // make sure script is loaded 
-            script.addEventListener("load", () => {
-                callback();
-            }); 
+            const googleApiScript = document.getElementById("googleMapsAPI")
+            if (!googleApiScript) {
+                const script = document.createElement("script")
+                script.src = url;
+                script.id = "googleMapsAPI"
+                document.getElementsByTagName("head")[0].appendChild(script);
+                // make sure script is loaded 
+                script.addEventListener("load", () => {
+                    callback();
+                }); 
+            }
         }; 
 
         loadScript(googleUrl, () => {

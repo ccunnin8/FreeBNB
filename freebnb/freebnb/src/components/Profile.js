@@ -1,26 +1,21 @@
 import React, { useContext, useEffect, useState } from 'react'
 import Nav from './Nav'
 import {UserContext} from "./auth/UserContext";
-import TextInput from './form/TextInput';
-import TextArea from "./form/TextArea";
 import FormProvider, { FormContext } from './form/Context/FormContext';
-import { states } from "./form/states_data";
-import Select from './form/Select';
-import FileInput from './form/FileInput';
+import { Link } from "react-router-dom";
+import MainListingForm from "./form/MainListingForm";
 
-const statesData = states.map(state => ({ "value": state.abbreviation, "text": state.abbreviation }))
-const roomTypesData = [
-    {"value": "P", "text": "Private Room"}, 
-    {"value": "W", "text": "Whole Home"}, 
-    {"value": "S", "text": "Shared Home"}
-]
+
 const Listing = ({ headline, photos, id, handleDelete }) => {
     
     return (
         <div className="flex flex-row items-center w-11/10 h-10 my-4 border-b border-gray-600 pb-3">
             { photos[0] && <img alt="thumbnail" className="w-10 h-10 mr-20 my-4" src={`${photos[0]?.image}`} /> }
-            <h2 className="mr-auto overflow-hidden">{headline}</h2>
-            <button onClick={() => handleDelete(id)} className="border border-black rounded p-1 bg-gray-500">Delete</button>
+            <h2 className="ml-auto mr-auto overflow-hidden">{headline}</h2>
+            <Link to={`/stay/${id}/edit`}>
+                <button className="flex-shrink-0 w-16 border border-black rounded p-1 bg-gray-500">Edit</button>
+            </Link>
+            <button onClick={() => handleDelete(id)} className="flex-shrink-0 w-16 border border-black rounded p-1 bg-gray-500">Delete</button>
         </div>
     )
 }
@@ -29,7 +24,7 @@ export default function Profile() {
     const { user } = userState;
     const [reservations, setReservations] = useState([]);
     const [listings, setListings] = useState([]);
-
+   
     const deleteListing = async id => {
         const request = new Request("/listings")
         const headers = new Headers()
@@ -96,14 +91,15 @@ export default function Profile() {
                        listings.map(listing => <Listing handleDelete={deleteListing} key={listing.id} {...listing} />)
                     }
                 </div>
-                <h2 className="text-lg">Create a Listing</h2>
-                <FormProvider>
-                    <NewListing setListings={setListings} listings={listings} />
-                </FormProvider>
+                    <FormProvider>
+                        <NewListing setListings={setListings} listings={listings} />
+                    </FormProvider>
+                    
             </div>
         </div>
     )
 }
+
 
 const NewListing = ({ setListings, listings }) => {
     const { fields, clearFields } = useContext(FormContext);
@@ -116,7 +112,6 @@ const NewListing = ({ setListings, listings }) => {
         for (let key of Object.keys(fields)) {
             formData.append(key, fields[key]);
         }
-       
         headers.append("Authorization", `JWT ${localStorage.getItem("token")}`)
         const res = await fetch(request, { method: "POST", headers, body: formData });
         if (res.status >= 200 && res.status <= 400) {
@@ -133,31 +128,7 @@ const NewListing = ({ setListings, listings }) => {
     }
 
     return (
-        <form encType="multipart/form-data" className="flex flex-col min-w-full" onSubmit={e => createNewListing(e)}>
-            <FileInput context={FormContext} name="photos" files={fields.files || []}/>
-            <TextInput classes={["m-0 "]} placeholder="Headline" name="headline" context={FormContext} value={fields.headline || "" }/>
-            <label>Description: </label>
-            <TextArea classes={["h-32"]}context={FormContext} value={fields.description || ""} name="description" />
-            <label>Price per Night:</label>
-            <TextInput 
-                placeholder="Price: $00.00" 
-                name="price_per_night" 
-                context={FormContext} 
-                value={fields.price_per_night || "" } 
-            />
-            <label>Room Type:</label>
-            <Select options={roomTypesData} context={FormContext} name="room_type" defaultVal={{key:"room_type", val: "P"}} />
-            <label>Address: </label>
-            <TextInput placeholder="123 Main Street" value={fields.street || ""} name="street" context={FormContext} />
-            <div>
-                <TextInput placeholder="City" value={fields.city || "" } name="city" context={FormContext} />
-                <Select name="state" defaultVal={{key: "state", val: "AL"}} options={statesData} context={FormContext} />
-            </div>
-            <TextInput 
-                classes={["w-1/3"]}
-                placeholder="Zip" extra={{minLength: "5", maxLength: "5"}} context={FormContext} name="zip_code" 
-            />
-            <input type="submit" value="Submit" />
-        </form>
+        <MainListingForm fields={fields} FormContext={FormContext} handleSubmit={createNewListing}/>
     )
 }
+

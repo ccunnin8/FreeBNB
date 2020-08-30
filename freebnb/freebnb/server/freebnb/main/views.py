@@ -1,6 +1,6 @@
 from .serializers import *
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, ListAPIView, UpdateAPIView, CreateAPIView
 from rest_framework import status 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response 
@@ -72,7 +72,6 @@ class ListingView(APIView):
         listingphoto.save() 
 
         return Response({ "status": "success", "listing": ListingSerializer(instance=listing).data}) 
-
         
     def delete(self, request, format=None):
         try:
@@ -127,39 +126,103 @@ class StayView(RetrieveAPIView):
     serializer_class = ListingSerializer
     queryset = Listing.objects.all()
 
+class ListingUpdateView(UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ListingSerializer
+    queryset = Listing.objects.all()
+    lookup_field = "pk"
+
+    def update(self, request, *args, **kwargs):
+        listing = ListingSerializer(instance=self.get_object(), data=request.data, partial=True)
+        address = AddressSerializer(instance=self.get_object().address, data=request.data, partial=True)
+        
+        if listing.is_valid():
+            listing.save()
+        else:
+            return Response({"status": "invalid listing data"})
+        if address.is_valid():
+            address.save()
+        else:
+            return Response({"status": "invalid address data"})
+        
+        if "photos" in request.FILES:
+            photo = ListingPhoto(listing=self.get_object(), image=request.FILES["photos"])
+           
+        return Response({"status": "success" })
+
 class StayListView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, format=None):
-        try:
-            # convert dates to python date objects 
-            toDate = datetime.strptime("%Y-%m-%d", request.query_params["toDate"])
-            fromDate = datetime.striptime("%Y-%m-%d", request.query_params["fromDate"])
-            # parse city, state if data sent in that format 
-            if "," in request.query_params["city"]:
-                split_city_state = request.query_params["city"].split(", ")
-                address__city = split_city_state[0]
-                address__state = split_city_state[1]
-            else:
-                address__city = request.query_params["city"]
-        except:
-            toDate = None 
-            fromDate = None 
-            city = request.query_params["city"]
+        query = {}
+        if request.GET.get("city"):
+            query["address__city__contains"] = request.GET.get("city")
+        if request.GET.get("state"):
+            query["address__state__contains"] = request.GET.get("state")
+        if request.GET.get("priceHigh"):
+            query["price_per_night__lte"] = request.GET.get("priceHigh")
+        if request.GET.get("priceLow"):
+            query["price_per_night__gte"] = request.GET.get("priceLow")
 
-        priceHigh = request.query_params["priceHigh"]
-        priceLow = request.query_params["priceLow"]
-        if not city:
-            listings = Listing.objects.all()[:10]
-            data = ListingSerializer(listings, many=True).data 
-            print(data)
-            return Response({ "status": "success", "stays": data })
-        queryset = Listing.objects.filter(
-            address__city=city, 
-            price_per_night__lte=priceHigh or 1000.0, 
-            price_per_night__gte=priceLow or 0.0,
-        ).exclude(
-            reservation__from_date__gte=fromDate or datetime.now(),
-            reservation__to_date__lte=toDate or datetime(datetime.now().year + 1, datetime.now().month, datetime.now().day) 
-        )
+        exclude = {}
+        if request.GET.get("toDate"):
+            exclude["reservation__to_date__gte"] = datetime.strptime("%Y-%m-%d", request.GET.get("toDate"))
+        if request.GET.get("fromDate"):
+            exclude["reservation__from_date__lte"] = datetime.strptime("%Y-%m-%d", request.GET.get("fromDate"))
+
+        queryset = Listing.objects.filter(**query).exclude(**exclude)
         return Response({ "stays": ListingSerializer(queryset, many=True).data})
+
+class AmenityListView(ListAPIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    serializer_class = AmenitySerializer
+    queryset = Amenity.objects.all()
+
+class AmenityUpdateView(UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AmenitySerializer
+    queryset = Amenity.objects.all() 
+
+    def put(self, request):
+        amenities = request.data["amenities"]
+        id = request.data["id"]
+        listing = Listing.objects.get(id=id)
+
+        for amenity in amenities:
+            a = Amenity.objects.get(amenity=amenity["amenity"])
+            if amenity["checked"]:
+                listing.amenity_set.add(a) 
+            else:
+                listing.amenity_set.remove(a) 
+        return Response({ "status": "success"})
+
+class RulesCreateUpdateView(CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Rules.objects.all() 
+    serializer_class = RulesSerializer 
+
+    def post(self, request, *args, **kwargs):
+        listing = Listing.objects.get(id=request.data["listing"])
+        try:
+            rules = listing.rules
+            print(rules.id)
+            rules_serializer = CreateRulesSerializer(instance=rules, data=request.data, partial=True)
+            print(rules_serializer)
+            if rules_serializer.is_valid():
+                rules_serializer.save()
+            else:
+                print(rules_serializer.errors)
+                return Response({ "status": "error"}, status=500)  
+        except:
+            request.data["listing"] = listing
+            rules = Rules(**request.data)
+            try:
+                rules.save()
+            except:
+                Response({"status": "error"}, status=500)
+        return Response(data={"status": "success"})
+
+        
+
+
+    

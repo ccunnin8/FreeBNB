@@ -64,6 +64,11 @@ class RulesSerializer(serializers.ModelSerializer):
             "additional"
         ]
 
+class CreateRulesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rules 
+        fields = "__all__"
+
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Amenity

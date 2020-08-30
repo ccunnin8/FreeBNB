@@ -28,6 +28,13 @@ const getReviewAverage = (reviews) => {
     return Math.floor(total / reviews.length );
 }
 
+const createStars = (count) => {
+    let output = ""
+    for (let i = 0; i < count; i++) {
+        output += " &#10030; " 
+    }
+    return output
+}
 const Review = ({ user, review }) => (
     <div className="py-3">
         <div className="flex flex-row items-center mb-2" style={{ width: "20%"}}>
@@ -57,6 +64,7 @@ const Stay = () => {
                 const data = await res.json();
                 if (res.status >= 200 && res.status <= 400) {
                     setData(data);
+                    console.log(data);
                     setLoading(false);
                     const geoData = await Geocode.fromAddress(`${data.address.city}, ${data.address.state}`)
                     const { geometry } = geoData?.results[0];
@@ -108,7 +116,7 @@ const Stay = () => {
                         <h1 className="text-3xl font-bold mb-2">{data.headline}</h1>
                         <p>{data.description}</p>
                         <h3>
-                            <span className="text-red-600">{Array.from({ length: getReviewAverage(data?.reviews)}).map(() => <>&#10030;</> )}</span>
+                            <span className="text-red-600" dangerouslySetInnerHTML={{ __html: createStars(getReviewAverage(data?.reviews))}}></span>
                             <span className="ml-3">({data?.reviews.length})</span>
                             <span className="ml-3 capitalize">{data?.address?.city}</span> <span className="uppercase">{data?.address?.state}</span>
                         </h3>
@@ -136,7 +144,7 @@ const Stay = () => {
                     <section className="border-b-2 my-4 pb-2">
                         <h1 className="text-lg font-bold">Amenities</h1>
                         <ul>
-                            { data?.amenities.map(a => <li key={Math.random() * 10 + 1} className="my-4">{a.amenity}</li>)}
+                            { data.amenities && data?.amenities.map(a => <li key={Math.random() * 10 + 1} className="my-4">{a.amenity}</li>)}
                         </ul>
                         <button onClick={() => setShow("amenities")}
                                 className="border-2 rounded shadow p-2 mx-auto w-11/12">Show all amenities</button>
@@ -154,9 +162,9 @@ const Stay = () => {
                     </section>
                     <section className="border-b-2 pb-3">
                         <h1 className="text-lg font-bold mb-3">
-                            <span className="text-red-600">{Array.from({ length: getReviewAverage(data?.reviews)}).map(() => <>&#10030;</> )}</span> { data.rating } ({ data.reviews.length })
+                            <span className="text-red-600" dangerouslySetInnerHTML={{ __html: createStars(getReviewAverage(data?.reviews))}}></span> { data.rating } ({ data.reviews.length })
                         </h1>
-                        { data?.reviews.map( review => <Review key={review.id} {...review } />)}
+                        { data.reviews && data?.reviews.map( review => <Review key={review.id} {...review } />)}
                     </section>
                     <section className="py-2 w-min-full">
                         <h1 className="text-xl font-bold">Rules</h1>
@@ -175,7 +183,7 @@ const Stay = () => {
                 <button className="p-1 border-2 shadow" onClick={() => setShow("main")}>Back</button>
                 <h1 className="text-xl font-bold">Rules</h1>
                     <div className="p-2">
-                        { Object.keys(data.rules).map((rule, index) => (
+                        { data.rules && Object.keys(data.rules).map((rule, index) => (
                             <p className="capitalize mb-2" key={index}>
                             {rule.split("_").join(" ")}: {data.rules[rule].toString()}</p>
                         ))}

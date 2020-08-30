@@ -9,7 +9,7 @@ import { Login, Signup } from "./components/LoginSignup";
 import Beach from "./assetts/beach.jpg";
 import Mountains from "./assetts/mountains.jpg";
 import Countryside from "./assetts/countryside.jpg";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route } from "react-router-dom";
 import { ContinueSignup } from './components/AddPhoto';
 import Messages, { Chat } from './components/Messages';
 import Profile from "./components/Profile";
@@ -18,6 +18,8 @@ import Cookie from "js-cookie";
 import { UserContext } from './components/auth/UserContext';
 import PrivateRoute from './components/PrivateRoute';
 import { tokenNotExpired } from "./components/auth/tokenNotExpired";
+import EditListing from "./components/EditListing";
+import FormProvider from './components/form/Context/FormContext';
 
 const carouselData = [
   { title: "mountains", subtitle: "view houses in the mountains", img: Mountains },
@@ -79,7 +81,7 @@ function App() {
   return (
     <Router>
       <div className="container mx-auto">
-            <Switch>
+           
               <Route exact path="/login">
                 <Login />
               </Route>
@@ -107,13 +109,18 @@ function App() {
                   <Footer />
                 </>
               </Route>
-              <PrivateRoute exact path="/profile">
+              <PrivateRoute path="/profile">
                 <Profile />
               </PrivateRoute>
               <PrivateRoute exact path="/reservations">
                 <Reservations />
               </PrivateRoute>
-            </Switch>
+              <PrivateRoute exact path="/stay/:id/edit">
+                <FormProvider>
+                  <EditListing />
+                </FormProvider>
+              </PrivateRoute>
+            
       </div>
     </Router>
   );
