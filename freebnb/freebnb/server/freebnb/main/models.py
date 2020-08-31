@@ -56,6 +56,7 @@ class Reservation(models.Model):
     total_price = models.IntegerField()
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="reservations", related_query_name="reservation")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    accepted = models.BooleanField(default=False)
 
 class Conversation(models.Model):
     created_at = models.DateTimeField(auto_created=True)

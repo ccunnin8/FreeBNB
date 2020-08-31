@@ -10,6 +10,7 @@ from rest_framework.parsers import MultiPartParser, JSONParser, FormParser
 from django.middleware.csrf import get_token
 from datetime import datetime 
 from rest_framework_jwt.settings import api_settings
+from dateutil import parser as dateutil_parser 
 
 @api_view(["get"])
 def get_csrf(request):
@@ -119,7 +120,30 @@ class ReservationView(APIView):
         return Response({ "reservations": ReservationSerializer(queryset, many=True).data }) 
 
     def post(self, request, format=None):
-        pass 
+        user = request.user 
+        toDate = dateutil_parser.isoparse(request.data["toDate"])
+        fromDate = dateutil_parser.isoparse(request.data["fromDate"])
+        totalDays = toDate - fromDate 
+        price = round(int(totalDays.days) * float(request.data["price"]), 2)
+        listing = Listing.objects.get(pk=request.data["id"])
+        reservations = Reservation.objects.filter(listing=listing, from_date__gte=fromDate, to_date__lte=toDate)
+
+        if not reservations:
+            try:
+                reservation = Reservation(
+                    user=user, 
+                    to_date = toDate,
+                    from_date = fromDate,
+                    listing=listing,
+                    total_price = price 
+                )
+                reservation.save()
+                return Response({ "status": "success"}, status=200)
+            except Exception:
+                return Response({ "status": "error"}, status=401)
+            
+        else:
+            return Response({ "status": "error", "msg": "dates are not valid" }, status=401)
 
 class StayView(RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
@@ -205,13 +229,10 @@ class RulesCreateUpdateView(CreateAPIView):
         listing = Listing.objects.get(id=request.data["listing"])
         try:
             rules = listing.rules
-            print(rules.id)
             rules_serializer = CreateRulesSerializer(instance=rules, data=request.data, partial=True)
-            print(rules_serializer)
             if rules_serializer.is_valid():
                 rules_serializer.save()
             else:
-                print(rules_serializer.errors)
                 return Response({ "status": "error"}, status=500)  
         except:
             request.data["listing"] = listing

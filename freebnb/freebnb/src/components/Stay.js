@@ -4,6 +4,7 @@ import { Map, TileLayer } from "react-leaflet";
 import "../../node_modules/leaflet/dist/leaflet.css";
 import Loading from "./Loading";
 import Geocode from "react-geocode";
+import Calendar from "@bit/nexxtway.react-rainbow.calendar";
 
 Geocode.setApiKey(process.env.REACT_APP_GEOCODING)
 
@@ -50,10 +51,10 @@ const Stay = () => {
     const [show, setShow] = useState("main")
     const [geoData, setGeodata] = useState({});
     const [loading, setLoading] = useState(true);
+    const [toggle, setToggle] = useState(false);
     const { id } = useParams();
     
     useEffect(() => {
-        
         (async function getData () {
             const request = new Request(`/stay/${id}`)
             const headers = new Headers();
@@ -64,7 +65,6 @@ const Stay = () => {
                 const data = await res.json();
                 if (res.status >= 200 && res.status <= 400) {
                     setData(data);
-                    console.log(data);
                     setLoading(false);
                     const geoData = await Geocode.fromAddress(`${data.address.city}, ${data.address.state}`)
                     const { geometry } = geoData?.results[0];
@@ -99,7 +99,8 @@ const Stay = () => {
         alert("saved to your favorites");
     }
     return ( loading ? <Loading /> : (
-        <>
+        <>  
+            {toggle && <Modal handleClick={() => setToggle(!toggle)} price={data.price_per_night} /> }
             <div className={show === "main" ? "" : "hidden" }>
                 <nav className="w-full h-20 w-11/12">
                     <ul className="mx-auto flex flex-row py-6 w-11/12">
@@ -112,6 +113,8 @@ const Stay = () => {
                     <img className="w-full mb-10" style={{height: 400}}  src={data?.photos[0]?.image} alt="where you could be staying" />
                 </section>
                 <div className="w-11/12 mx-auto">
+                    <button onClick={() => setToggle(true)}
+                        className="text-white bg-red-600 active:bg-red-800 p-2 rounded active:border active:border-black focus:shadow-outline">Request to Stay</button>
                     <section className="border-b-2 pb-3">
                         <h1 className="text-3xl font-bold mb-2">{data.headline}</h1>
                         <p>{data.description}</p>
@@ -203,4 +206,51 @@ const Stay = () => {
     ) )
 }
 
+const Modal = ({ handleClick, price }) => {
+    const [fromDate, setFromDate] = useState(null);
+    const { id } = useParams();
+    const handleSetDate = value => {
+        (async () => {
+            const request = new Request("/reservations")
+            const headers = new Headers();
+            headers.append("Content-Type", "application/json");
+            headers.append("Authorization", `JWT ${window.localStorage.getItem("token")}`);
+            const body = JSON.stringify({ toDate: value, fromDate, id, price });
+            const res = await fetch(request, { method: "POST", headers, body })
+            if (res.status >= 200 && res.status <= 400) {
+                alert("Request sent!");
+            } else {
+                alert("Those dates are not available");
+            }
+        })()
+        handleClick();
+    };
+
+    return (
+        <div onClick={()=> handleClick()} 
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.3)"}}
+            className="transition-opacity
+                flex min-w-full min-h-full bg-gray-400 absolute z-1 justify-center items-center"
+        >
+            <div onClick={e => e.stopPropagation()} className="p-6 absolute w-3/4 h-3/4 border border-black z-20 bg-white opacity-100">
+                <h1>Choose the dates of your stay</h1>
+                <form className="flex flex-row">
+                <div className="w-2/3 mx-auto">
+            
+            { !fromDate ? <div>
+                <h1>Start Date:</h1>
+                <Calendar value={fromDate} minDate={new Date()} onChange={value => setFromDate(value)} />
+            </div>
+            :
+            <div>
+                <h1>End Date:</h1>
+                <Calendar minDate={fromDate} onChange={value => handleSetDate(value)} />
+            </div>
+            }
+        </div>
+                </form>
+            </div>
+        </div>
+    )
+}
 export default Stay

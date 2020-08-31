@@ -37,7 +37,19 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review 
         fields = "__all__"
 
+class ListingPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListingPhoto 
+        fields = "__all__"
+
+class ListingReservationSerializer(serializers.ModelSerializer):
+    photos = ListingPhotoSerializer(many=True, read_only=True)
+    class Meta:
+        model = Listing 
+        fields = ["id", "headline", "photos", "owner"]
+
 class ReservationSerializer(serializers.ModelSerializer):
+    listing = ListingReservationSerializer()
     class Meta:
         model = Reservation 
         fields = "__all__"
@@ -47,10 +59,6 @@ class AddressSerializer(serializers.ModelSerializer):
         model = Address 
         fields = "__all__"
 
-class ListingPhotoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ListingPhoto 
-        fields = "__all__"
 
 class RulesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -78,7 +86,6 @@ class ListingSerializer(serializers.ModelSerializer):
     owner = UserSerializer()
     address = AddressSerializer()
     photos = ListingPhotoSerializer(many=True, read_only=True)
-    reservations = ReservationSerializer(many=True, read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
     amenities = AmenitySerializer(source="amenity_set", many=True, read_only=True)
     rules = RulesSerializer()

@@ -66,10 +66,11 @@ export default function Profile() {
                 if (res.status >= 200 && res.status <= 400 ){
                     const data = await res.json();
                     if (data.status !== "error") {
+                        console.log(data.reservations);
                         setReservations(data.reservations); 
                     }
                 } else {
-                    console.log("an error occurred gettign the data");
+                    console.log("an error occurred getting the data");
                 }
             } catch (err) {
                 console.log("server error occurred", err);
@@ -83,7 +84,9 @@ export default function Profile() {
                 <h1 className="text-2xl">Welcome { user.first_name }</h1>
                 <div>
                     <h2 className="text-lg">My reservations</h2>
-                    { reservations.length === 0 ? <p>No reservations yet</p> : "" }
+                    { reservations.length === 0 ? <p>No reservations yet</p> : reservations.map(res => (
+                        <Reservation key={res.id} {...res} />
+                    )) }
                 </div>
                 <div>
                     <h2 className="text-lg">My Listings</h2>
@@ -100,6 +103,17 @@ export default function Profile() {
     )
 }
 
+const Reservation = ({ to_date, from_date, listing, accepted }) => (
+    <div className="flex flex-row items-center w-11/10 h-10 my-4 border-b border-gray-600 pb-3">
+            <Link to={`/stay/${listing.id}`}>      
+             { listing.photos[0] && <img alt="thumbnail" className="w-10 h-10 mr-20 my-4" src={`${listing.photos[0]?.image}`} /> }
+            </Link>
+            <h2 className="ml-auto mr-auto overflow-hidden">{listing.headline}</h2>
+            { accepted ? <span className="text-blue">Approved</span> : <span className="text-red">Awaiting approval</span>}
+            <h2>{from_date}</h2>
+            <h2>{to_date}</h2>
+        </div>
+)
 
 const NewListing = ({ setListings, listings }) => {
     const { fields, clearFields } = useContext(FormContext);
