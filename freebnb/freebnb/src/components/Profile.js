@@ -84,9 +84,22 @@ export default function Profile() {
                 <h1 className="text-2xl">Welcome { user.first_name }</h1>
                 <div>
                     <h2 className="text-lg">My reservations</h2>
-                    { reservations.length === 0 ? <p>No reservations yet</p> : reservations.map(res => (
-                        <Reservation key={res.id} {...res} />
-                    )) }
+                    <table className="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Listing</th>
+                                <th>Description</th>
+                                <th>Approved</th>
+                                <th>From</th>
+                                <th>To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        { reservations.length === 0 ? <p>No reservations yet</p> : reservations.map(res => (
+                            <Reservation key={res.id} {...res} />
+                        )) }
+                        </tbody>
+                    </table>
                 </div>
                 <div>
                     <h2 className="text-lg">My Listings</h2>
@@ -104,15 +117,25 @@ export default function Profile() {
 }
 
 const Reservation = ({ to_date, from_date, listing, accepted }) => (
-    <div className="flex flex-row items-center w-11/10 h-10 my-4 border-b border-gray-600 pb-3">
+    <tr>
+        <td className="flex justify-center items-center">
             <Link to={`/stay/${listing.id}`}>      
-             { listing.photos[0] && <img alt="thumbnail" className="w-10 h-10 mr-20 my-4" src={`${listing.photos[0]?.image}`} /> }
+            { listing.photos[0] && <img alt="thumbnail" className="w-10 h-10 mr-20 my-4" src={`${listing.photos[0]?.image}`} /> }
             </Link>
+        </td>
+        <td>
             <h2 className="ml-auto mr-auto overflow-hidden">{listing.headline}</h2>
-            { accepted ? <span className="text-blue">Approved</span> : <span className="text-red">Awaiting approval</span>}
-            <h2>{from_date}</h2>
-            <h2>{to_date}</h2>
-        </div>
+        </td>
+        <td>
+            { accepted ? <span className="text-blue-300">Approved</span> : <span className="text-red-600">Awaiting approval</span>}
+        </td>
+        <td>
+            <h2>{from_date && new Date(from_date).toLocaleDateString()}</h2>
+        </td>
+        <td>
+            <h2>{to_date && new Date(to_date).toLocaleDateString()}</h2>
+        </td>
+    </tr>
 )
 
 const NewListing = ({ setListings, listings }) => {

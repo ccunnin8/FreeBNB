@@ -44,6 +44,32 @@ class UserView(APIView):
         else:
             return Response({ "status": "error", "errors": user.errors})
 
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def get_user_reservations(request):
+    try:
+        user = request.user 
+        approved_reservations = Reservation.objects.filter(listing__owner=user, accepted=True)
+        pending_reservations = Reservation.objects.filter(listing_owner=user, accepted=False)
+        return Response({ "status": "success", "approved": ReservationSerializer(approved_reservations, many=True).data,
+            "pending": ReservationSerializer(pending_reservations, many=True).data
+        })
+    except:
+        return Response({ "status": "error" })
+
+@api_view(["PATCH"])
+@permission_classes([permissions.IsAuthenticated])
+def approve_reservation(request):
+    try:
+        reservation = Reservation.objects.get(pk=request.data["id"])
+        reservation.accepted = True 
+        reservation.save()
+        return Response({"status": "success"})
+    except:
+        return Response({ "status": "error"})
+
+
+
 class ListingView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ListingSerializer
