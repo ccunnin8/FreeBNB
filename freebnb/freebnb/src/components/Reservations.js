@@ -32,14 +32,43 @@ export default function Reservations() {
         })();
     }, [])
 
+    const handleApprove = id => {
+        const request = new Request("/approve_reservation");
+        const headers = new Headers();
+        headers.append("Content-Type", "application/json");
+        headers.append("Authorization", `JWT ${window.localStorage.getItem("token")}`)
+        const body = JSON.stringify({ id });
+        (async () => {
+            try {
+                const res = await fetch(request, { method: "PATCH", headers, body })
+                if (res.status >= 200 && res.status <= 400) {
+                    let reservation;
+                    const newPending = pending.filter(((res) => {
+                        if (res.id === id) reservation = res;
+                        return res.id !== id
+                    }));
+                    setPending(newPending);
+                    setApproved([...approved, reservation])
+                    const data = await res.json();
+                    console.log(data);
+                } else {
+                    console.log("an error occurred")
+                }
+            } catch (err) {
+                console.log("an error occurred", err);
+            }
+        })();
+    }
+
+    const handleDeny = id => ""
     return (
         <div>
             <Nav />
             <div className="container w-11/12 mx-auto">
                 <h1 className="text-center text-2xl">Reservations for Your Listings</h1>
                 <h2 className="text-xl">Approved Reservations</h2>
-                { approved.length > 0 ? <table className="min-w-full">
-                    <thead>
+                { approved.length > 0 ? <table className="min-w-full my-4">
+                    <thead className="text-left">
                         <tr>
                             <th>Reservation</th>
                             <th>User</th>
@@ -48,7 +77,14 @@ export default function Reservations() {
                         </tr>
                     </thead>
                     <tbody>
-                    
+                    { approved.map((res) => (
+                            <tr key={res.id}>
+                                <td>{res?.listing?.address?.city}, {res?.listing?.address?.state} </td>
+                                <td>{res?.user?.first_name}</td>
+                                <td>{res?.from_date && new Date(res?.from_date).toLocaleDateString()}</td>
+                                <td>{res?.to_date && new Date(res?.to_date).toLocaleDateString()}</td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table> :
                 <h2>No approved reservations</h2> 
@@ -72,10 +108,10 @@ export default function Reservations() {
                                 <td>{res?.user?.first_name}</td>
                                 <td>{res?.from_date && new Date(res?.from_date).toLocaleDateString()}</td>
                                 <td>{res?.to_date && new Date(res?.to_date).toLocaleDateString()}</td>
-                                <td><button 
+                                <td><button onClick={() => handleApprove(res?.id)}
                                     className="border border-red-600 text-red-600 p-1 hover:text-white hover:bg-red-600"
                                 >Approve</button></td>
-                                <td><button
+                                <td><button onClick={() => handleDeny(res?.id)}
                                     className="border border-teal-500 p-1 hover:text-white hover:bg-teal-600"
                                 >Deny</button></td>
                             </tr>

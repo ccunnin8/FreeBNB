@@ -62,10 +62,13 @@ def get_user_reservations(request):
 def approve_reservation(request):
     try:
         reservation = Reservation.objects.get(pk=request.data["id"])
-        reservation.accepted = True 
-        reservation.save()
-        return Response({"status": "success"})
-    except:
+        if request.user == reservation.listing.owner:
+            reservation.accepted = True 
+            reservation.save()
+            return Response({"status": "success"})
+        else:
+            return Response({"status": "error", "msg": "not authorized"})
+    except Exception:
         return Response({ "status": "error"})
 
 
