@@ -42,22 +42,27 @@ class ListingPhotoSerializer(serializers.ModelSerializer):
         model = ListingPhoto 
         fields = "__all__"
 
-class ListingReservationSerializer(serializers.ModelSerializer):
-    photos = ListingPhotoSerializer(many=True, read_only=True)
-    class Meta:
-        model = Listing 
-        fields = ["id", "headline", "photos", "owner"]
-
-class ReservationSerializer(serializers.ModelSerializer):
-    listing = ListingReservationSerializer()
-    class Meta:
-        model = Reservation 
-        fields = "__all__"
-
 class AddressSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Address 
         fields = "__all__"
+
+
+class ListingReservationSerializer(serializers.ModelSerializer):
+    photos = ListingPhotoSerializer(many=True, read_only=True)
+    address = AddressSerializer()
+    owner = UserSerializer()
+    class Meta:
+        model = Listing 
+        fields = ["id", "headline", "photos", "owner", "address"]
+
+class ReservationSerializer(serializers.ModelSerializer):
+    listing = ListingReservationSerializer()
+    user = UserSerializer()
+    class Meta:
+        model = Reservation 
+        fields = "__all__"
+
 
 
 class RulesSerializer(serializers.ModelSerializer):

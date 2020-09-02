@@ -50,11 +50,11 @@ def get_user_reservations(request):
     try:
         user = request.user 
         approved_reservations = Reservation.objects.filter(listing__owner=user, accepted=True)
-        pending_reservations = Reservation.objects.filter(listing_owner=user, accepted=False)
+        pending_reservations = Reservation.objects.filter(listing__owner=user, accepted=False)
         return Response({ "status": "success", "approved": ReservationSerializer(approved_reservations, many=True).data,
             "pending": ReservationSerializer(pending_reservations, many=True).data
         })
-    except:
+    except Exception:
         return Response({ "status": "error" })
 
 @api_view(["PATCH"])

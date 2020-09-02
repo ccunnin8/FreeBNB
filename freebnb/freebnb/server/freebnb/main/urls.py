@@ -14,6 +14,7 @@ urlpatterns = [
     path("updateAmenities", views.AmenityUpdateView.as_view()),
     path("updateRules", views.RulesCreateUpdateView.as_view()),
     path("reservations", views.ReservationView.as_view()),
+    path("owner_reservations", views.get_user_reservations),
     path("stay/<int:pk>", views.StayView.as_view()),
     path("stays", views.StayListView.as_view())
 ]
