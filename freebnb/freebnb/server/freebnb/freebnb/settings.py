@@ -47,8 +47,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main.apps.MainConfig',
     "rest_framework",
-    "localflavor"
+    "localflavor",
+    "channels"
 ]
+
+ASGI_APPLICATION = "freebnb.routing.chat"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

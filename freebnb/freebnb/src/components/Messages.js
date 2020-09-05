@@ -1,5 +1,5 @@
 import React, {useState, useEffect } from 'react'
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Nav from './Nav';
 
 const data = [
@@ -20,6 +20,27 @@ const data = [
 
 ]
 export default function Messages() {
+    const [ convos, setConvos] = useState(null);
+    useEffect(() => {
+        const request = new Request("/conversations")
+        const headers = new Headers();
+        headers.append("Authorization", `JWT ${window.localStorage.getItem("token")}`);
+        (async () => {
+            try {
+                const res = await fetch(request, { method: "GET", headers });
+                if (res.status >= 200 && res.status <= 400) {
+                    const data = await res.json(); 
+                    if (data.status === "success") {
+                        setConvos(data.conversations);
+                    } else {
+                        console.log("error", data);
+                    }
+                }
+            } catch (err) { 
+                console.log(err)
+            }
+        })();
+    }, [])
     return (
         <>
             <div className="container w-11/12 p-4 mx-auto h-full">
@@ -59,14 +80,25 @@ const Message = ({ sender, receiver, msg, time }) => (
         <p className="text-lg"> {msg} <span className="text-xs">{time}</span></p>
     </div>
 )
+
+let socket;
+
 export const Chat = () => {
     const [msg, setMsg] = useState("");
     const [msgs, setMsgs] = useState([]);
+    const { id } = useParams();
+   
     useEffect(() => {
+        socket = new WebSocket(`ws://localhost:8000/messages/${id}?token=${localStorage.getItem("token")}`);
+        socket.onopen = e => console.log("connected", e);
+        socket.onerror = e => console.log("error", e);
+        socket.onclose = e => console.log("close", e);
         setMsgs([
             { id: 1, sender: "Mary", receiver: "Corey", msg: "Hey there", time: "03-14 2pm" },
             { id: 2, sender: "Corey", receiver: "Mary", msg: "Hey!", time: "03-14 3pm"}
         ])
+        return () => socket.close();
+        
     }, [])
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -82,6 +114,7 @@ export const Chat = () => {
             id: msgs.length + 1, sender: "Corey", receiver: "Mary", msg, time: timestamp
         }]);
         setMsg("");
+        socket.send(JSON.stringify({text: msg, token: localStorage.getItem("token")}))
     };
     const handleChange = e => setMsg(e.target.value);
     return (

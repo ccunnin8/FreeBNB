@@ -270,6 +270,20 @@ class RulesCreateUpdateView(CreateAPIView):
         return Response(data={"status": "success"})
 
         
+class ConversationListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ConversationSerializer 
+    query_set = Conversation.objects.all() 
 
+    def get(self, request, format=None):
+        try:
+            user = request.user 
+            conversations = Conversation.objects.get_user_convos(user)
+            return Response({ 
+                "convos": ConversationSerializer(conversations, many=True).data,
+                "status": "success"
+            })
+        except Exception:
+            return Response({ "status": "error" })
 
     
