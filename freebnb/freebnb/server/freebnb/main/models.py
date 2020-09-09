@@ -76,3 +76,5 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField(max_length=500)
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="messages", related_query_name="message")
+    time = models.TextField(max_length=15, default="")
+    

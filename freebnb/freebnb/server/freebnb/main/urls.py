@@ -17,5 +17,6 @@ urlpatterns = [
     path("owner_reservations", views.get_user_reservations),
     path("stay/<int:pk>", views.StayView.as_view()),
     path("stays", views.StayListView.as_view()),
-    path("conversations", views.ConversationListView.as_view())
+    path("conversations", views.ConversationListView.as_view()),
+    path("conversation/<int:pk>", views.MessageListView.as_view())
 ]

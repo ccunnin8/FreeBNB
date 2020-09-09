@@ -286,4 +286,19 @@ class ConversationListView(APIView):
         except Exception:
             return Response({ "status": "error" })
 
-    
+
+class MessageListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    query_set = Conversation.objects.all() 
+    serializer_class = MessageSerializer
+    lookup_field = "pk"
+
+    def get(self, request, *args, **kwargs):
+        user = request.user 
+        convo = Conversation.objects.get(pk=kwargs["pk"]) 
+        if convo.receiver == user or convo.sender == user:
+            messages = convo.messages.all()
+            print(messages[0].message)
+            return Response({ "status": "success", "messages": MessageSerializer(messages, many=True).data})
+        else:
+            return Response({ "status": "error", "msg": "not authorized"})

@@ -34,11 +34,12 @@ class ChatConsumer(AsyncConsumer):
             })
     
     async def chat_message(self, event):
+        data = json.loads(event["text"])
         await self.send({
             "type": "websocket.send",
             "text": event["text"],
         })
-        await self.save_message(event["text"])
+        await self.save_message(data)
         
 
     async def websocket_receive(self, event):
@@ -69,7 +70,7 @@ class ChatConsumer(AsyncConsumer):
             })
 
     @database_sync_to_async
-    def save_message(self, message):
+    def save_message(self, data):
         user = User.objects.get(username=self.user)
         convo = Conversation.objects.get(id=self.conversation_id)
-        return Message.objects.create(message=message, sender=user, conversation=convo)
+        return Message.objects.create(message=data["message"], time=data["time"], sender=user, conversation=convo)

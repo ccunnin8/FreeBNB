@@ -29,7 +29,8 @@ class UserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
-    birthdate = serializers.DateField() 
+    birthdate = serializers.DateField()
+    username = serializers.CharField() 
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -128,6 +129,14 @@ class ConversationSerializer(serializers.Serializer):
     class Meta:
         model = Conversation 
         fields = "__all__"
+
+class MessageSerializer(serializers.Serializer):
+    sender = serializers.CharField()
+    message = serializers.CharField()
+    id = serializers.CharField()
+    class Meta:
+        model = Message 
+        fields = ["id", "sender", "message"]
 
         
 
