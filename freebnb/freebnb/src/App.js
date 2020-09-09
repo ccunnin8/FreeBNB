@@ -9,7 +9,7 @@ import { Login, Signup } from "./components/LoginSignup";
 import Beach from "./assetts/beach.jpg";
 import Mountains from "./assetts/mountains.jpg";
 import Countryside from "./assetts/countryside.jpg";
-import { BrowserRouter as Router, Route, useHistory } from "react-router-dom";
+import { BrowserRouter as Router, Route } from "react-router-dom";
 import { ContinueSignup } from './components/AddPhoto';
 import Messages, { Chat } from './components/Messages';
 import Profile from "./components/Profile";
@@ -38,9 +38,8 @@ const Homepage = () => (
 )
 
 function App() {
-  const { userState, login, logout } = useContext(UserContext);
-  
-  //const history = useHistory();
+  const { login, logout } = useContext(UserContext);
+
   useEffect(() => {
     // get csrf token from the server for post requests 
     (async function setCookie() {
@@ -68,11 +67,9 @@ function App() {
         if (data.token) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("token-refresh-date", new Date())
-          login(data.user);
-          console.log(userState);
+          await login(data.user);
         } else {
           console.log("error", data);
-          logout();
         }
       })();
     // if token is expired, remove token, refreshdate, username and 

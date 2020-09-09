@@ -66,6 +66,7 @@ export default function Profile() {
                 if (res.status >= 200 && res.status <= 400 ){
                     const data = await res.json();
                     if (data.status !== "error") {
+                        console.log(data.reservations);
                         setReservations(data.reservations); 
                     }
                 } else {
@@ -94,12 +95,11 @@ export default function Profile() {
                             </tr>
                         </thead>
                         <tbody>
-                        { reservations.length > 0 && reservations.map(res => (
+                        { reservations.length === 0 ? <p>No reservations yet</p> : reservations.map(res => (
                             <Reservation key={res.id} {...res} />
                         )) }
                         </tbody>
                     </table>
-                    { reservations.length === 0 && <p>No reservations yet</p>}
                 </div>
                 <div>
                     <h2 className="text-lg">My Listings</h2>

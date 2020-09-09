@@ -15,7 +15,7 @@ export const BirthdayInput = ({ errorClass, context }) => {
     const updateBday = e => {
         const bday = new Date(e.target.value);
         updateErrors("birthdateError", validateBday(bday));
-        updateFields("birthdate", bday.toLocaleDateString());
+        updateFields("birthdate", e.target.value);
     }
 
     return (
