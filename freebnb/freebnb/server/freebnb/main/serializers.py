@@ -125,19 +125,24 @@ class ListingQuerySerializer(serializers.Serializer):
     city = serializers.CharField(max_length=50)
     state = serializers.CharField(max_length=2)
 
-class ConversationSerializer(serializers.Serializer):
-    class Meta:
-        model = Conversation 
-        fields = "__all__"
+
 
 class MessageSerializer(serializers.Serializer):
     sender = serializers.CharField()
     message = serializers.CharField()
     id = serializers.CharField()
+    time = serializers.CharField()
     class Meta:
         model = Message 
-        fields = ["id", "sender", "message"]
+        fields = ["id", "sender", "message", "time"]
 
-        
+class ConversationSerializer(serializers.Serializer):
+    sender = UserSerializer()
+    receiver = UserSerializer()
+    id = serializers.CharField()
+    messages = MessageSerializer(many=True)
+    class Meta:
+        model = Conversation 
+        fields = "__all__"
 
 

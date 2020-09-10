@@ -64,6 +64,11 @@ class ConversationManager(models.Manager):
         q = Q(sender=user) | Q(receiver=user)
         return self.get_queryset().filter(q) 
     
+    def get_prev_convo(self, user1, user2):
+        q1 = Q(sender=user1) & Q(receiver=user2)
+        q2 = Q(sender=user2) & Q(receiver=user1)
+        return self.get_queryset().filter(q1 | q2)
+    
 class Conversation(models.Model):
     objects = ConversationManager()
 

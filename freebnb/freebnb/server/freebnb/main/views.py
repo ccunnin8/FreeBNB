@@ -60,10 +60,18 @@ def get_user_reservations(request):
 @api_view(["PATCH"])
 @permission_classes([permissions.IsAuthenticated])
 def approve_reservation(request):
+    user = request.user 
     try:
         reservation = Reservation.objects.get(pk=request.data["id"])
         reservation.accepted = True 
         reservation.save()
+        convo = Conversation.objects.get_prev_convo(user, reservation.listing.owner)
+        Message.objects.create(
+            sender=user,
+            message=f"{user.first_name} has accepted your request to stay",
+            time=datetime.now().strftime("%m/%d/%Y %H:%M"),
+            conversation=convo
+        )
         return Response({"status": "success"})
     except:
         return Response({ "status": "error"})
@@ -154,6 +162,11 @@ class ReservationView(APIView):
         listing = Listing.objects.get(pk=request.data["id"])
         reservations = Reservation.objects.filter(listing=listing, from_date__gte=fromDate, to_date__lte=toDate)
 
+        # stop user from booking their own place 
+        if listing.owner == user:
+            return Response({ "status": "error", "msg": "you cannot book your own place"})
+
+        # if no reservations exists for current dates make one 
         if not reservations:
             try:
                 reservation = Reservation(
@@ -164,6 +177,26 @@ class ReservationView(APIView):
                     total_price = price 
                 )
                 reservation.save()
+
+                # send owner of lister a message alerting them about the request 
+                conversation = Converation.objects.get_prev_convo(user, listing.owner)
+                
+                message=f"{user.first_name} would like to book your place"
+                
+                # if no conversation currently exists between requester and owner make one
+                if len(conversation) == 0:
+                    conversation = Conversation.objects.create(
+                        sender=user,
+                        receiver=listing.owner
+                    )
+
+                # add an automated message to the conversation 
+                Message.objects.create(
+                    message=message,
+                    sender=user, 
+                    conversation=conversation[0],
+                    time=datetime.now().strftime("%m/%d/%Y %H:%M")
+                )
                 return Response({ "status": "success"}, status=200)
             except Exception:
                 return Response({ "status": "error"}, status=401)
@@ -284,6 +317,7 @@ class ConversationListView(APIView):
                 "status": "success"
             })
         except Exception:
+            print(Exception.with_traceback())
             return Response({ "status": "error" })
 
 
@@ -298,7 +332,6 @@ class MessageListView(APIView):
         convo = Conversation.objects.get(pk=kwargs["pk"]) 
         if convo.receiver == user or convo.sender == user:
             messages = convo.messages.all()
-            print(messages[0].message)
             return Response({ "status": "success", "messages": MessageSerializer(messages, many=True).data})
         else:
             return Response({ "status": "error", "msg": "not authorized"})
