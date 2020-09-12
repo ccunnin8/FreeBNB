@@ -38,9 +38,8 @@ const Homepage = () => (
 )
 
 function App() {
-  const { userState, login, logout } = useContext(UserContext);
-  
-  //const history = useHistory();
+  const { login, logout } = useContext(UserContext);
+
   useEffect(() => {
     // get csrf token from the server for post requests 
     (async function setCookie() {
@@ -69,7 +68,6 @@ function App() {
           localStorage.setItem("token", data.token);
           localStorage.setItem("token-refresh-date", new Date())
           login(data.user);
-          console.log(userState);
         } else {
           console.log("error", data);
           logout();

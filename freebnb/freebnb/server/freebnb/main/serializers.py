@@ -1,5 +1,5 @@
 from rest_framework import serializers  
-from .models import User, Listing, Reservation, Address, ListingPhoto, Review, Rules, Amenity  
+from .models import * 
 from random import randint
 from django.core.validators import MaxLengthValidator, MinValueValidator, MaxValueValidator, MinLengthValidator
 
@@ -29,7 +29,8 @@ class UserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
-    birthdate = serializers.DateField() 
+    birthdate = serializers.DateField()
+    username = serializers.CharField() 
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -123,8 +124,25 @@ class CreateListingSerializer(serializers.Serializer):
 class ListingQuerySerializer(serializers.Serializer):
     city = serializers.CharField(max_length=50)
     state = serializers.CharField(max_length=2)
-    
 
-        
+
+
+class MessageSerializer(serializers.Serializer):
+    sender = serializers.CharField()
+    message = serializers.CharField()
+    id = serializers.CharField()
+    time = serializers.CharField()
+    class Meta:
+        model = Message 
+        fields = ["id", "sender", "message", "time"]
+
+class ConversationSerializer(serializers.Serializer):
+    sender = UserSerializer()
+    receiver = UserSerializer()
+    id = serializers.CharField()
+    messages = MessageSerializer(many=True)
+    class Meta:
+        model = Conversation 
+        fields = "__all__"
 
 

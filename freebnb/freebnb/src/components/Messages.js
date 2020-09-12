@@ -1,31 +1,39 @@
-import React, {useState, useEffect } from 'react'
-import { Link } from "react-router-dom";
+import React, {useState, useEffect, useContext } from 'react'
+import { Link, useParams } from "react-router-dom";
 import Nav from './Nav';
+import {UserContext} from "./auth/UserContext";
+import { v4 as uuid } from "uuid";
 
-const data = [
-    { 
-        lastMsg: "Thank you for booking!",
-        userName: "Rhona M",
-        time: "Mon 4:30pm",
-        avatar: undefined,
-        id: 1 
-    },
-    { 
-        lastMsg: "Hope you liked the place!",
-        userName: "Adam G",
-        time: "07/01 2:00pm",
-        avatar: undefined,
-        id: 2
-    },
 
-]
 export default function Messages() {
+    const [ convos, setConvos] = useState(null);
+    useEffect(() => {
+        const request = new Request("/conversations")
+        const headers = new Headers();
+        headers.append("Authorization", `JWT ${window.localStorage.getItem("token")}`);
+        (async () => {
+            try {
+                const res = await fetch(request, { method: "GET", headers });
+                if (res.status >= 200 && res.status <= 400) {
+                    const data = await res.json(); 
+                    if (data.status === "success") {
+                        console.log(data);
+                        setConvos(data.convos);
+                    } else {
+                        console.log("error", data);
+                    }
+                }
+            } catch (err) { 
+                console.log(err)
+            }
+        })();
+    }, [])
     return (
         <>
             <div className="container w-11/12 p-4 mx-auto h-full">
                 <Nav />
                 <h1 className="text-2xl mb-4">Messages</h1>
-                <ConvoPreviews convos={data} />
+                { convos && <ConvoPreviews convos={convos} />}
             </div>
         </>
     )
@@ -38,35 +46,74 @@ const ConvoPreviews = ({ convos }) => (
     </>
 )
 
-const Conversation = ({ lastMsg, userName, avatar, time, id }) => (
-    <Link to={`/messages/${id}`}>
+const Conversation = ({ messages, sender, receiver, avatar, id }) => {
+    const { userState } = useContext(UserContext);
+
+   return (
+        <Link to={`/messages/${id}`}>
         <div className="flex flex-row border-2 p-4 mb-5">
             <div className="flex flex-row items-center p-2 mb-4 w-1/2">
                 {avatar ? <img src={avatar} alt="user's avatar" /> : 
                 <div style={{ height: 30, width: 30}}className="rounded-full bg-red-400 mr-3"></div>
                 }
-                <h3>{ userName }</h3>
+                <h3>{ userState?.user?.username === sender.username ? receiver.first_name : sender.first_name }</h3>
             </div>
-            <div className="w-1/2">
-                <h1>{lastMsg}</h1>
-                <h4>{time}</h4>
+            { messages.length > 0 && <div className="w-1/2">
+                <h1>{messages[messages.length - 1].message}</h1>
+                <h4>{messages[messages.length - 1].time}</h4>
             </div>
+            }
         </div>
     </Link>
-)
-const Message = ({ sender, receiver, msg, time }) => (
-    <div className={sender === "Corey" ? "text-right" : "text-left"}>
-        <p className="text-lg"> {msg} <span className="text-xs">{time}</span></p>
+   )
+}
+const Message = ({ sender, user, message, time }) => (
+    <div className={sender === user ? "text-right" : "text-left"}>
+        <p className="text-lg"> {message} <span className="text-xs">{time}</span></p>
     </div>
 )
+
+let socket;
+
 export const Chat = () => {
     const [msg, setMsg] = useState("");
-    const [msgs, setMsgs] = useState([]);
+    const [msgs, setMsgs] = useState([{message: "testing"}]);
+    const { id } = useParams();
+    const { userState } = useContext(UserContext);
+
+    const handleReceiveMessage = e => {
+        const data = JSON.parse(e.data);
+        setMsgs(msgs => [...msgs, data])
+    }
+    
     useEffect(() => {
-        setMsgs([
-            { id: 1, sender: "Mary", receiver: "Corey", msg: "Hey there", time: "03-14 2pm" },
-            { id: 2, sender: "Corey", receiver: "Mary", msg: "Hey!", time: "03-14 3pm"}
-        ])
+        socket = new WebSocket(`ws://localhost:8000/messages/${id}?token=${localStorage.getItem("token")}`);
+        socket.onopen = e => console.log("connected", e);
+        socket.onerror = e => console.log("error", e);
+        socket.onclose = e => console.log("close", e);
+        socket.onmessage = e => { handleReceiveMessage(e) } 
+        (async () => {
+            const request = new Request(`/conversation/${id}`);
+            const headers = new Headers()
+            headers.append("Authorization", `JWT ${localStorage.getItem("token")}`)
+            try {
+                const res = await fetch(request, { method: "GET", headers });
+                if (res.status >= 200 && res.status <= 400) {
+                    const data = await res.json();
+                    if (data.status === "success") {
+                        setMsgs(() => data.messages)
+                    } else {
+                        console.log("an error occurred getting the messages")
+                    }
+                } else {
+                    console.log("an error occured getting messages");
+                }
+            } catch (err) {
+                console.log("an error occurred", err)
+            }
+        })()
+        return () => socket.close();
+        
     }, [])
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -78,9 +125,11 @@ export const Chat = () => {
         const minutes = date.getMinutes()
         const timestamp = `${month}-${day} ${hours}:${minutes}`
         e.preventDefault();
-        setMsgs([...msgs, {
-            id: msgs.length + 1, sender: "Corey", receiver: "Mary", msg, time: timestamp
-        }]);
+        socket.send(JSON.stringify({
+            message: msg,
+            sender: userState.user.username, 
+            time: timestamp
+        }))
         setMsg("");
     };
     const handleChange = e => setMsg(e.target.value);
@@ -90,7 +139,7 @@ export const Chat = () => {
             <Link to="/messages">Back</Link>
             <h1 className="text-3xl mb-2">Messages</h1>
             <div className="border mx-auto w-11/12 p-4 shadow rounded">
-                { msgs.map(msg => <Message key={msg.id} {...msg} />)}
+                { msgs.map(msg => <Message user={userState?.user?.username} key={msg.id || uuid()} {...msg} />)}
             </div>
             <form className="p-4" onSubmit={(e) => handleSubmit(e)}>
                 <input 

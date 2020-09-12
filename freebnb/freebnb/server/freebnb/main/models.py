@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q 
 from django.contrib.auth.models import  AbstractUser
 from localflavor.us.models import USStateField, USZipCodeField
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -58,9 +59,21 @@ class Reservation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     accepted = models.BooleanField(default=False)
 
+class ConversationManager(models.Manager):
+    def get_user_convos(self, user):
+        q = Q(sender=user) | Q(receiver=user)
+        return self.get_queryset().filter(q) 
+    
+    def get_prev_convo(self, user1, user2):
+        q1 = Q(sender=user1) & Q(receiver=user2)
+        q2 = Q(sender=user2) & Q(receiver=user1)
+        return self.get_queryset().filter(q1 | q2)
+    
 class Conversation(models.Model):
-    created_at = models.DateTimeField(auto_created=True)
-    last_modified = models.DateTimeField() 
+    objects = ConversationManager()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now_add=True) 
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conversations", related_query_name="conversation")
     receiver = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -68,3 +81,5 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField(max_length=500)
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="messages", related_query_name="message")
+    time = models.TextField(max_length=15, default="")
+    
