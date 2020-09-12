@@ -53,16 +53,21 @@ export const LoginSignup = ({type="login", Methods, Form, handleSubmit }) => {
 }
 const LoginForm = ({ handleSubmit }) => {
     // form to log in user 
-    const { fields, errors } = useContext(FormContext);
+    const { fields, errors, updateErrors } = useContext(FormContext);
     const { login } = useContext(UserContext);
     const history = useHistory();
 
-    const loginSubmit = e => {
+    const loginSubmit = async e => {
+        // attempts to login user to server, returns error info if not successful
         e.preventDefault();
-        handleSubmit({...fields, login, history});
+        const errors = await handleSubmit({...fields, login, history});
+        for (let error in errors) {
+            updateErrors(error, errors[error])
+        }
     }
    return(
         <form className="flex flex-col" onSubmit={e => loginSubmit(e)}>
+            <p className="text-red-600 text-center">{errors.error}</p>
             <EmailInput context={FormContext} />
             <PasswordInput 
                     error={errors.passwordError}
@@ -143,7 +148,7 @@ export const SignupEmail = ({toggle, setToggle, handleSubmit}) => {
 }
 
 const handleSignup = async (params) => {
-    const { body, login } = params;
+    const { body } = params;
     const request = new Request("/user");
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
@@ -184,7 +189,7 @@ const handleLogin = async (params) => {
             login(data.user)
             history.push("/stays");
         } else {
-            console.log("error data: ", data);
+            return data 
         }
     } catch (err) {
         console.log(err);

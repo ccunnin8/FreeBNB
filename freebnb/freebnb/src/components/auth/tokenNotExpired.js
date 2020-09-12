@@ -4,6 +4,8 @@ export const tokenNotExpired = () => {
     let last = localStorage.getItem("token-refresh-date")
     if (last) {
       const now = new Date();
+      // convert last token date to date object 
+      last = new Date(last);
       return ((now - last) / (1000 * 24 * 60 * 60)) <= 7;
     } 
     return false;

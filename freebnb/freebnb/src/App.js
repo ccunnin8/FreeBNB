@@ -9,7 +9,7 @@ import { Login, Signup } from "./components/LoginSignup";
 import Beach from "./assetts/beach.jpg";
 import Mountains from "./assetts/mountains.jpg";
 import Countryside from "./assetts/countryside.jpg";
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route, useHistory } from "react-router-dom";
 import { ContinueSignup } from './components/AddPhoto';
 import Messages, { Chat } from './components/Messages';
 import Profile from "./components/Profile";
@@ -67,9 +67,10 @@ function App() {
         if (data.token) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("token-refresh-date", new Date())
-          await login(data.user);
+          login(data.user);
         } else {
           console.log("error", data);
+          logout();
         }
       })();
     // if token is expired, remove token, refreshdate, username and 
