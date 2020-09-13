@@ -1,8 +1,9 @@
-import React, { useContext} from "react";
+import React from "react";
 import Homepage from "../../App.js";
 import Header from "../../components/Header";
-import { render, fireEvent } from "@testing-library/react";
-import UserProvider, { UserContext } from "../../components/auth/UserContext.js";
+import Hero from "../../components/Hero";
+import { render, fireEvent, waitForElement, getByPlaceholderText } from "@testing-library/react";
+import UserProvider from "../../components/auth/UserContext.js";
 import { createMemoryHistory } from "history";
 import { Router } from "react-router-dom";
 
@@ -19,9 +20,9 @@ const renderWithRouter = (ui, value) => {
     const history = createMemoryHistory();
     return render(
         <Router history={history}>
-            <UserContext.Provider value={value}>
+            <UserProvider state={value}>
                 { ui }
-            </UserContext.Provider>
+            </UserProvider>
         </Router>
     )
 }
@@ -39,13 +40,11 @@ describe("test homepage", () => {
     });
 
     it("shows logout when user is logged in", () => {
-        const value = {
-            userState: {
+        const state = {
                 loggedIn: true,
                 username: "TEST"
-            },
         }
-        const { getByText } = renderWithRouter(<Header/>, value)
+        const { getByText } = renderWithRouter(<Header/>, state)
         const logout = getByText("Logout");
         expect(logout).toBeInTheDocument(); 
     });
@@ -59,21 +58,22 @@ describe("test homepage", () => {
     });
 
     it("clicking on logout should logout user", async () => {
-        const value = {
-            userState: {
-                loggedIn: true,
-                username: "TEST"
-            },
-            // logout: jest.fn(() => {
-            //     return Promise.resolve();
-            // })
+        const state =  {
+            loggedIn: true,
+            username: "TEST"
         }
-        const { getByText, findByText } = renderWithRouter(<Header />, value)
+        const { getByText, findByText } = renderWithRouter(<Header />, state)
         const logout = getByText("Logout");
         fireEvent.click(logout)
-        expect(value.logout).toHaveBeenCalledTimes(1);
         const login = await findByText("Login")
         expect(login).toBeInTheDocument();
+    });
+
+    it("should update search value when user starts typing search", async () => {
+        const { getByTestId } = render(<Hero />);
+        const search = getByTestId("citysearch");
+        fireEvent.change(search, { target: { value: "testing"}});
+        expect(search.value).toBe("testing");
     });
 
 })

@@ -38,9 +38,8 @@ const reducer = (state, action) => {
     }
 }
 
-const UserProvider =  ({children}) => {
-    const [userState, dispatch] = useReducer(reducer, defaultState);
-
+const UserProvider =  ({state, children}) => {
+    const [userState, dispatch] = useReducer(reducer, state || defaultState);
     const login = (user) => dispatch({ type: "login", user});
     const logout = () => dispatch({ type: "logout"});
 

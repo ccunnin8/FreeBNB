@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 import Calendar from "@bit/nexxtway.react-rainbow.calendar";
 
-const parseDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
+export const parseDate = (dateString) => {
+    // return nothing if invalid date passed 
+    if (!dateString || !/[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}/.test(dateString)) return "";
+    
+    // split date apart and use to make date object 
+    const parts = dateString.split("-");
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+
+    // get parts of date to reconstruct and display to user 
     const day = date.getDate();
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
-    return `${month}/${day}/${year}`
+    return `${month < 10 ? "0" + month : month}/${day < 10 ? "0" + day : day}/${year}`
 }
 
 
@@ -41,6 +47,7 @@ const SearchForm = () => {
         <div className="min-h-full min-w-full top-0 absolute bg-gray-100 opacity-25"></div>
         <form className="relative mx-auto w-5/6 flex flex-col justify-between content-between" onSubmit={(e) => handleSubmit(e) }>
             <input 
+                data-testid="citysearch"
                 className="h-10 mb-5 rounded pl-3" type="text" placeholder="Where do you want to go?" 
                 value={location} onChange={(e) => handleLocationChange(e)}
             />
