@@ -3,6 +3,13 @@ import { render } from '@testing-library/react';
 import App from '../App';
 import UserProvider from '../components/auth/UserContext';
 
+global.fetch = jest.fn(() => (
+  Promise.resolve({
+    json: () => Promise.resolve({ })
+  })
+));
+
+const tokenNotExpired = jest.fn(() => true);
 
 describe("test the landing page", () => {
   test('renders home page', () => {
@@ -17,15 +24,21 @@ describe("test the landing page", () => {
     expect(login).toBeInTheDocument();
   });
 
-  test("shows logout if user is logged in", () => {
+  test("expect fetch to be called twice", () => {
     const { getByText, queryByText } = render(
       <UserProvider value={{ userState: { loggedIn: true } }}>
         <App />
       </UserProvider>
     )
-    const login = queryByText("Login");
-    const logout = getByText("Logout")
-    expect(login).toNotBeInTheDocument();
-    expect(logout).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
+
+  test("expect localStorage to be called with token", () => {
+    render(
+      <UserProvider>
+        <App />
+      </UserProvider>
+    )
+    expect(localStorage.getItem).toBeCalledWith("token");
+  })
 })

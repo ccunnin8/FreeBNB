@@ -1,14 +1,8 @@
 import React, { useEffect, useContext } from 'react';
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import Carousel from './components/Carousel';
 import Footer from './components/Footer';
 import Stays from "./components/Stays";
 import Stay from "./components/Stay";
 import { Login, Signup } from "./components/LoginSignup";
-import Beach from "./assetts/beach.jpg";
-import Mountains from "./assetts/mountains.jpg";
-import Countryside from "./assetts/countryside.jpg";
 import { BrowserRouter as Router, Route, useHistory } from "react-router-dom";
 import { ContinueSignup } from './components/AddPhoto';
 import Messages, { Chat } from './components/Messages';
@@ -20,22 +14,7 @@ import PrivateRoute from './components/PrivateRoute';
 import { tokenNotExpired } from "./components/auth/tokenNotExpired";
 import EditListing from "./components/EditListing";
 import FormProvider from './components/form/Context/FormContext';
-
-const carouselData = [
-  { title: "mountains", subtitle: "view houses in the mountains", img: Mountains },
-  { title: "beach", subtitle: "view houses on the beach", img: Beach},
-  { title: "countryside", subtitle: "get away from the city", img: Countryside }
-]
-
-
-const Homepage = () => (
-  <div className="container mx-auto">
-        <Header />
-        <Hero />
-        <Carousel title={"Find spaces that suit your style"} cards={carouselData} />
-
-    </div>
-)
+import Homepage from "./components/Homepage";
 
 function App() {
   const { login, logout } = useContext(UserContext);
